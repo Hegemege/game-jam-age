@@ -49,11 +49,9 @@ public class TreeScript : MonoBehaviour
         {
             Debug.Log("The tree dried out!");
         }
-
-
     }
 
-    void Photosynthesis()
+    private void Photosynthesis()
     {
         // Generates energy from sunlight and leaves
         Energy += Leaves * climate.Sunlight * Time.deltaTime;
@@ -61,7 +59,7 @@ public class TreeScript : MonoBehaviour
         //energy = Mathf.Min(max_energy, energy);
     }
 
-    void HandleWater()
+    private void HandleWater()
     {
         // Collect water from rain
         Water += climate.Rain * Time.deltaTime;
@@ -70,7 +68,7 @@ public class TreeScript : MonoBehaviour
         Water -= Mathf.Max(0, climate.Temperature * (climate.Sunlight + 1) * Time.deltaTime * 0.1f);
     }
 
-    void Grow()
+    private void Grow()
     {
         // Growth is affected by the current temperature and it needs water/energy
         float growth = Time.deltaTime * climate.Temperature * GrowthRate;
