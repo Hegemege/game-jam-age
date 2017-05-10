@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using UnityEngine.UI;
+
 public class TreeScript : MonoBehaviour
 {
     private ClimateController climate;
+    private Text energyGauge;
+    private Text waterGauge;
 
     public float GrowthRate;
-
     public float InitialEnergy;
     public float InitialWater;
 
@@ -25,8 +28,12 @@ public class TreeScript : MonoBehaviour
 
     void Awake()
     {
+        waterGauge = GameObject.Find("WaterGauge").GetComponent<Text>();
+        energyGauge = GameObject.Find("EnergyGauge").GetComponent<Text>();
         climate = GameObject.Find("ClimateController").GetComponent<ClimateController>();
         Leaves = InitialLeaves;
+        Water = InitialWater;
+        Energy = InitialEnergy;
     }
     
 	void Start ()
@@ -36,11 +43,14 @@ public class TreeScript : MonoBehaviour
 	
 	void Update ()
     {
+        energyGauge.text = "Energy: " + Energy.ToString("F1");
+        waterGauge.text = "Water: " + Water.ToString("F1");
+
         Photosynthesis();
         HandleWater();
         Grow();
 
-        // Death stuff or whatever
+        // Check status (Dead/Alive)
         if (Water >= MaxWater)
         {
             Debug.Log("The tree is rotten!");
@@ -54,31 +64,32 @@ public class TreeScript : MonoBehaviour
     private void Photosynthesis()
     {
         // Generates energy from sunlight and leaves
-        Energy += Leaves * climate.Sunlight * Time.deltaTime;
-
-        //energy = Mathf.Min(max_energy, energy);
+        Energy += Leaves * climate.GetSunlight() * Time.deltaTime;
+        Energy = Mathf.Clamp(Energy, 0, MaxEnergy);
     }
 
     private void HandleWater()
     {
         // Collect water from rain
-        Water += climate.Rain * Time.deltaTime;
+        Water += climate.GetRain() * Time.deltaTime;
 
         // Evaporate water because of the temperature (And sunlight?)
-        Water -= Mathf.Max(0, climate.Temperature * (climate.Sunlight + 1) * Time.deltaTime * 0.1f);
+        Water -= Mathf.Max(0, climate.GetTemperature() * (climate.GetSunlight() + 1) * Time.deltaTime * 0.1f);
+
+        Water = Mathf.Clamp(Water, 0, MaxWater);
     }
 
     private void Grow()
     {
         // Growth is affected by the current temperature and it needs water/energy
-        float growth = Time.deltaTime * climate.Temperature * GrowthRate;
+        float growth = climate.GetTemperature() * GrowthRate;
         growth = Mathf.Min(growth, Energy, Water);
-        growth = Mathf.Max(0, growth);
+        growth = Mathf.Max(growth, 0);
         if (growth > 0)
         {
             // Growing consumes energy and water
-            Energy -= Time.deltaTime * climate.Temperature;
-            Water -= Time.deltaTime * climate.Temperature;
+            Energy -= Time.deltaTime * growth;
+            Water -= Time.deltaTime * growth;
         }
     }
 

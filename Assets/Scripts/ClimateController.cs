@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using UnityEngine.UI;
+
 public enum Season
 {
     Spring,
@@ -12,6 +14,10 @@ public enum Season
 
 public class ClimateController : MonoBehaviour 
 {
+    private Text temperatureGauge;
+    private Text yearText;
+
+
     [HideInInspector]
     public int Year;
 
@@ -41,23 +47,23 @@ public class ClimateController : MonoBehaviour
     public float SunlightWinter;
 
     // Season parameters
-    [HideInInspector]
-    public float Rain;
-    [HideInInspector]
-    public float Sunlight;
-    //[HideInInspector]
-    public float Temperature;
+    private float rain;
+    private float sunlight;
+    private float temperature;
 
     public Season StartingSeason;
-    //[HideInInspector]
-    public Season CurrentSeason;
+    private Season currentSeason;
 
     void Awake()
     {
+        temperatureGauge = GameObject.Find("TemperatureGauge").GetComponent<Text>();
+        yearText = GameObject.Find("YearText").GetComponent<Text>();
+
+
         Year = 1;
-        CurrentSeason = StartingSeason;
+        currentSeason = StartingSeason;
         SeasonInterpolationLength = Mathf.Clamp(SeasonInterpolationLength, 0, SeasonLength);
-        InterpolateParameters(1, CurrentSeason);
+        InterpolateParameters(1, currentSeason);
     }
 
     void Start() 
@@ -68,21 +74,29 @@ public class ClimateController : MonoBehaviour
     void Update() 
     {
         UpdateSeason();
+
+        temperatureGauge.text = temperature.ToString("F1") + " °C";
+        yearText.text = "Year: " + Year.ToString();
+    }
+
+    public Season GetSeason()
+    {
+        return currentSeason;
     }
 
     public float GetTemperature()
     {
-        return Temperature;
+        return temperature;
     }
 
     public float GetRain()
     {
-        return Rain;
+        return rain;
     }
 
     public float GetSunlight()
     {
-        return Sunlight;
+        return sunlight;
     }
 
 
@@ -93,24 +107,24 @@ public class ClimateController : MonoBehaviour
         if (seasonTimer > SeasonLength)
         {
             seasonTimer = 0;
-            CurrentSeason = GetNextSeason(CurrentSeason);
+            currentSeason = GetNextSeason(currentSeason);
         }
 
         // Interpolate temperature when the season is changing
         // Interpolation starts at the end of each season
         var midSeasonTime = SeasonLength - SeasonInterpolationLength;
-        var t = seasonTimer - midSeasonTime;
-        var p = Mathf.Clamp(t / SeasonInterpolationLength, 0, 1);
-        InterpolateParameters(p, GetNextSeason(CurrentSeason));
+        var time = seasonTimer - midSeasonTime;
+        var weight = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1);
+        InterpolateParameters(weight, GetNextSeason(currentSeason));
         
 
         // Adjust parameters according to user input
-        Temperature *= (1 + TemperatureModifier);
-        Rain *= (1 + RainModifier);
-        Sunlight *= (1 + SunlightModifier); 
+        temperature *= (1 + TemperatureModifier + SunlightModifier); // Sun affects temperature?
+        rain *= (1 + RainModifier);
+        sunlight *= (1 + SunlightModifier); 
     }
 
-    private void InterpolateParameters(float position, Season targetSeason)
+    private void InterpolateParameters(float weight, Season targetSeason)
     {
         var targetTemp = GetSeasonTemperature(targetSeason);
         var targetRain = GetSeasonRain(targetSeason);
@@ -121,9 +135,9 @@ public class ClimateController : MonoBehaviour
         var prevRain = GetSeasonRain(prevSeason);
         var prevSun = GetSeasonSunlight(prevSeason);
 
-        Temperature = prevTemp + position * (targetTemp - prevTemp);
-        Rain = prevRain + position * (targetRain - prevRain);
-        Sunlight = prevSun + position * (targetSun - prevSun);
+        temperature = prevTemp + weight * (targetTemp - prevTemp);
+        rain = prevRain + weight * (targetRain - prevRain);
+        sunlight = prevSun + weight * (targetSun - prevSun);
     }
 
 
