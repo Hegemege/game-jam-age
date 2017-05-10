@@ -10,7 +10,10 @@ public class TreeScript : MonoBehaviour
     private Text energyGauge;
     private Text waterGauge;
 
-    public float GrowthRate;
+    private float size;
+    private float growthRate; // Current growth rate
+
+    public float GrowthMultiplier; // For fine tuning the gameplay
     public float InitialEnergy;
     public float InitialWater;
 
@@ -34,11 +37,13 @@ public class TreeScript : MonoBehaviour
         Leaves = InitialLeaves;
         Water = InitialWater;
         Energy = InitialEnergy;
+
+        size = 1;
     }
     
 	void Start ()
     {
-
+        
     }
 	
 	void Update ()
@@ -81,15 +86,18 @@ public class TreeScript : MonoBehaviour
 
     private void Grow()
     {
-        // Growth is affected by the current temperature and it needs water/energy
-        float growth = climate.GetTemperature() * GrowthRate;
-        growth = Mathf.Min(growth, Energy, Water);
-        growth = Mathf.Max(growth, 0);
-        if (growth > 0)
+        // Growth is affected by the current temperature
+        growthRate = climate.GetTemperature() * GrowthMultiplier;
+
+        // Growing needs water and energy
+        growthRate = Mathf.Min(Water, Energy, growthRate);
+        growthRate = Mathf.Max(0, growthRate);
+        if (growthRate > 0)
         {
             // Growing consumes energy and water
-            Energy -= Time.deltaTime * growth;
-            Water -= Time.deltaTime * growth;
+            Energy -= Time.deltaTime * growthRate;
+            Water -= Time.deltaTime * growthRate;
+            size += Time.deltaTime * growthRate;
         }
     }
 
