@@ -14,6 +14,11 @@ public enum Season
 
 public class ClimateController : MonoBehaviour 
 {
+    public GameObject SpringBG;
+    public GameObject SummerBG;
+    public GameObject AutumnBG;
+    public GameObject WinterBG;
+
     private Text temperatureGauge;
     private Text yearText;
 
@@ -22,6 +27,8 @@ public class ClimateController : MonoBehaviour
     public int Year;
 
     // User input
+    public float RainStepSize;
+    public float SunlightStepSize;
     public float TemperatureModifier { get; set; }
     public float RainModifier { get; set; }
     public float SunlightModifier { get; set; }
@@ -64,6 +71,13 @@ public class ClimateController : MonoBehaviour
         currentSeason = StartingSeason;
         SeasonInterpolationLength = Mathf.Clamp(SeasonInterpolationLength, 0, SeasonLength);
         InterpolateParameters(1, currentSeason);
+
+        SetSeasonBGAlpha(0, Season.Autumn);
+        SetSeasonBGAlpha(0, Season.Summer);
+        SetSeasonBGAlpha(0, Season.Spring);
+        SetSeasonBGAlpha(0, Season.Winter);
+
+        UpdateSeason();
     }
 
     void Start() 
@@ -114,14 +128,18 @@ public class ClimateController : MonoBehaviour
         // Interpolation starts at the end of each season
         var midSeasonTime = SeasonLength - SeasonInterpolationLength;
         var time = seasonTimer - midSeasonTime;
-        var weight = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1);
+        var weight = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1); // Weight stays 0, until the season starts to change
         InterpolateParameters(weight, GetNextSeason(currentSeason));
+
+        // Change the background
+        SetSeasonBGAlpha((1 - weight), currentSeason);
+        SetSeasonBGAlpha(weight, GetNextSeason(currentSeason));
         
 
         // Adjust parameters according to user input
-        temperature *= (1 + TemperatureModifier + SunlightModifier); // Sun affects temperature?
-        rain *= (1 + RainModifier);
-        sunlight *= (1 + SunlightModifier); 
+        temperature *= (1 + TemperatureModifier + SunlightModifier * SunlightStepSize);
+        rain *= (1 + (RainModifier * RainStepSize));
+        sunlight *= (1 + (SunlightModifier * SunlightStepSize)); 
     }
 
     private void InterpolateParameters(float weight, Season targetSeason)
@@ -226,4 +244,31 @@ public class ClimateController : MonoBehaviour
                 return 0;
         }
     }
+
+    private GameObject GetBackgroundImage(Season season)
+    {
+        switch (season)
+        {
+            case Season.Spring:
+                return SpringBG;
+            case Season.Summer:
+                return SummerBG;
+            case Season.Autumn:
+                return AutumnBG;
+            case Season.Winter:
+                return WinterBG;
+            default:
+                Debug.LogError("Unknown season!" + season);
+                return SpringBG;
+        }
+    }
+
+    private void SetSeasonBGAlpha(float alpha, Season season)
+    {
+        var imgObj = GetBackgroundImage(season);
+        Color c = imgObj.GetComponent<SpriteRenderer>().color;
+        c.a = alpha;
+        imgObj.GetComponent<SpriteRenderer>().color = c;
+    }
+
 }
