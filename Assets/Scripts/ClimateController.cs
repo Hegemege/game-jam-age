@@ -15,6 +15,11 @@ public class ClimateController : MonoBehaviour
     [HideInInspector]
     public int Year;
 
+    // User input
+    public float TemperatureModifier { get; set; }
+    public float RainModifier { get; set; }
+    public float SunlightModifier { get; set; }
+
     // Season changing
     private float seasonTimer;
     public float SeasonInterpolationLength;
@@ -40,11 +45,11 @@ public class ClimateController : MonoBehaviour
     public float Rain;
     [HideInInspector]
     public float Sunlight;
-    [HideInInspector]
+    //[HideInInspector]
     public float Temperature;
 
     public Season StartingSeason;
-    [HideInInspector]
+    //[HideInInspector]
     public Season CurrentSeason;
 
     void Awake()
@@ -52,7 +57,7 @@ public class ClimateController : MonoBehaviour
         Year = 1;
         CurrentSeason = StartingSeason;
         SeasonInterpolationLength = Mathf.Clamp(SeasonInterpolationLength, 0, SeasonLength);
-        InterpolateParameters(SeasonInterpolationLength / 2, CurrentSeason);
+        InterpolateParameters(1, CurrentSeason);
     }
 
     void Start() 
@@ -65,43 +70,47 @@ public class ClimateController : MonoBehaviour
         UpdateSeason();
     }
 
-    
+    public float GetTemperature()
+    {
+        return Temperature;
+    }
 
-    
+    public float GetRain()
+    {
+        return Rain;
+    }
+
+    public float GetSunlight()
+    {
+        return Sunlight;
+    }
 
 
     private void UpdateSeason()
     {
-        // Changes the season and the temperature after x seconds
+        // Change the season after x seconds
         seasonTimer += Time.deltaTime;
         if (seasonTimer > SeasonLength)
         {
             seasonTimer = 0;
             CurrentSeason = GetNextSeason(CurrentSeason);
         }
-        if (seasonTimer < SeasonInterpolationLength)
-        {
-            // We are closing to the current seasons target parameters
-            float t = seasonTimer + SeasonInterpolationLength / 2.0f;
-            InterpolateParameters(t, CurrentSeason);
-        }
-        else if (seasonTimer > (SeasonLength - (SeasonInterpolationLength / 2))) 
-        {
-            // The current season is ending
-            float t = seasonTimer - (SeasonLength - (SeasonInterpolationLength / 2));
-            InterpolateParameters(t, GetNextSeason(CurrentSeason));
-        }
-        else
-        {
-            // Mid season, no actual intepolation happens here
-            float t = SeasonInterpolationLength;
-            InterpolateParameters(t, CurrentSeason);
-        }
+
+        // Interpolate temperature when the season is changing
+        // Interpolation starts at the end of each season
+        var midSeasonTime = SeasonLength - SeasonInterpolationLength;
+        var t = seasonTimer - midSeasonTime;
+        var p = Mathf.Clamp(t / SeasonInterpolationLength, 0, 1);
+        InterpolateParameters(p, GetNextSeason(CurrentSeason));
         
 
+        // Adjust parameters according to user input
+        Temperature *= (1 + TemperatureModifier);
+        Rain *= (1 + RainModifier);
+        Sunlight *= (1 + SunlightModifier); 
     }
 
-    private void InterpolateParameters(float timeFromPrevSeason, Season targetSeason)
+    private void InterpolateParameters(float position, Season targetSeason)
     {
         var targetTemp = GetSeasonTemperature(targetSeason);
         var targetRain = GetSeasonRain(targetSeason);
@@ -112,7 +121,6 @@ public class ClimateController : MonoBehaviour
         var prevRain = GetSeasonRain(prevSeason);
         var prevSun = GetSeasonSunlight(prevSeason);
 
-        float position = Mathf.Clamp(timeFromPrevSeason / SeasonInterpolationLength, 0, 1);
         Temperature = prevTemp + position * (targetTemp - prevTemp);
         Rain = prevRain + position * (targetRain - prevRain);
         Sunlight = prevSun + position * (targetSun - prevSun);
