@@ -142,27 +142,42 @@ public class TreeScript : MonoBehaviour
         var energyParams = seasonParams[1];
         var waterOptimality = CalculateOptimality(Water / MaxWater, waterParams[0], waterParams[1]);
         var energyOptimality = CalculateOptimality(Energy / MaxEnergy, energyParams[0], energyParams[1]);
+		var temperatureOptimality = CalculateOptimality(climate.GetTemperature() / 100f, 0.20f, 0.40f);  // Optimal temperature is between 20 and 40 degrees
+
+		waterOptimality = Mathf.Clamp(waterOptimality, -1, 1);
+		energyOptimality = Mathf.Clamp(energyOptimality, -1, 1);
+		temperatureOptimality = Mathf.Clamp(temperatureOptimality, -1, 1);
 
         // Growth is affected by the current temperature
-        seasonalSizeGain += climate.GetTemperature() * waterOptimality * energyOptimality * Time.deltaTime;
-        seasonalLeavesGain += climate.GetSunlight() * Time.deltaTime; // FIXME: Better logic for leaves
+		var sign = 1;
+		if (waterOptimality < 0 || energyOptimality < 0 || temperatureOptimality < 0) 
+		{
+			// Check the sign separately to avoid double negatives
+			sign = -1;
+		}
+		seasonalSizeGain += Mathf.Abs(temperatureOptimality * waterOptimality * energyOptimality * Time.deltaTime) * sign; // Always between -1 and 1
+
+		var sunlightOptimality = CalculateOptimality(climate.GetSunlight(), 0.60f, 1f);
+		seasonalLeavesGain += sunlightOptimality * Time.deltaTime;
 
 
     }
 
-    public void SeasonalGrowth(Season nextSeason)
+	public void SeasonalGrowth(Season nextSeason, float seasonLength)
     {
-        var generator = gameObject.GetComponent<TreeGenerator>();
-        if (seasonalSizeGain > 0)
-        {
-            size += seasonalSizeGain;
-        }
+		// Scale growth variables by seasonLenght (to range of [-1, 1])
+		var sizeIncrease = Mathf.Clamp(seasonalSizeGain / seasonLength, 0, 1);  // Size cannot decrease
+		Leaves = Mathf.Clamp(seasonalLeavesGain / seasonLength, 0, 1); // Leaves cannot be negative
+		size += sizeIncrease;
+		seasonalSizeGain = 0;
+		seasonalLeavesGain = 0;
 
+
+		// Update parameters for the TreeGenerator
         Debug.Log(size);
-        Leaves = Mathf.Clamp(seasonalLeavesGain, 0, 1);
+		var generator = gameObject.GetComponent<TreeGenerator>();
+        Leaves = Mathf.Clamp(seasonalLeavesGain / seasonLength, 0, 1);
         generator.SeasonalGrowth(size, Leaves);
-
-
     }
 
     private Vector2[] GetSeasonParamenters(Season season)
