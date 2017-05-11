@@ -101,4 +101,8 @@ public class TreeScript : MonoBehaviour
         }
     }
 
+    public void SeasonalGrowth(Season nextSeason)
+    {
+        // TODO
+    }
 }

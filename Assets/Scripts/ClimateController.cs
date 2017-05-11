@@ -166,6 +166,9 @@ public class ClimateController : MonoBehaviour
         // Invokes growth on the tree
         // Spends energy
 
+        var tree = GameObject.Find("Tree").GetComponent<TreeScript>();
+        tree.SeasonalGrowth(target);
+
         // And finally set the current season
         currentSeason = target;
     }
