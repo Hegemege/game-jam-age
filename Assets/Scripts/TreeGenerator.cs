@@ -84,31 +84,37 @@ public class TreeGenerator : MonoBehaviour
     /// </summary>
     /// <param name="newSize"></param>
     /// <param name="newLeaves"></param>
-    public void SeasonalGrowth(float newSize, float newLeaves)
+    public void SeasonalGrowth(float newSize, float newLeaves, Season nextSeason)
     {
-        // If the size is large enough, update mesh
-        if (Mathf.Abs(newSize - size) > 0.01f)
-        {
-            size = newSize;
-            RegenerateTree(false, false, true);
-        }
+        newSize = Mathf.Log(1 + size + newSize);
+
+        size = newSize;
+        RegenerateTree(false, false, true);
 
         // If leaves have changed, shrink or expand the canopies
-        if (newLeaves >= leaves)
+        if (nextSeason != Season.Winter)
         {
-            leaves = Mathf.Clamp(newLeaves, 0f, 1f);
-            // Expand canopies
-            ExpandCanopies(false);
+            if (newLeaves >= leaves)
+            {
+                leaves = Mathf.Clamp(newLeaves, 0f, 1f);
+                // Expand canopies
+                ExpandCanopies(false);
+            }
+            else
+            {
+                leaves = Mathf.Clamp(newLeaves, 0f, 1f);
+                // Shrink canopies - shrink everything and make first X disappear
+                ShrinkCanopies();
+            }
         }
         else
         {
-            leaves = Mathf.Clamp(newLeaves, 0f, 1f);
-            // Shrink canopies - shrink everything and make first X disappear
+            leaves = 0f;
             ShrinkCanopies();
         }
 
         // If both have increased, grow a new branch if possible
-
+        // TODO
     }
 
     private void ExpandCanopies(bool all)

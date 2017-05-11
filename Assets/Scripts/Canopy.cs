@@ -154,7 +154,7 @@ public class Canopy : MonoBehaviour
         // Scale the canopy based on the given value, and whether to complete vanish it
         if (vanish)
         {
-            targetScale = Vector3.zero;
+            leaves = 0f;
         }
         else
         {
