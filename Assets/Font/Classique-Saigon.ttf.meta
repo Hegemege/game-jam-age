@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 5f97a9a2c25ea064e8320502636010ca
+timeCreated: 1494491688
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: ClassiqueSaigon
+  fontNames:
+  - ClassiqueSaigon
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
