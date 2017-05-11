@@ -292,10 +292,19 @@ public class TreeGenerator : MonoBehaviour
                 {
                     if (shapeIndex == branchVertexIndices[branchIndex])
                     {
+                        // Places any new branches at the center of the parent branch
                         branchVertexPositions.Add(accumulatedBasePosition + direction * i * interval);
-                        //branchVertexPositions.Add(vertexPos1);
-                        branchVertexDirections.Add((direction + Random.onUnitSphere*0.75f).normalized);
-                        //branchVertexDirections.Add((Quaternion.AngleAxis(twist, Vector3.up) * trunkShapeVertices[shapeIndex]).normalized);
+
+                        // Save direction to grow the tree in. Not sharply downwards, or directly along the old direction
+                        var newDirection = direction + Random.onUnitSphere;
+                        while (Vector3.Dot(newDirection.normalized, Vector3.up) < -0.2f &&
+                            Vector3.Dot(newDirection.normalized, direction) > 0.2f)
+                        {
+                            newDirection = direction + Random.onUnitSphere;
+                        }
+                        branchVertexDirections.Add(newDirection.normalized);
+
+                        // Store thickness at current point
                         branchVertexThicknesses.Add(ringThickness * trunkThickness[i][shapeIndex]);
                     }
                 }
