@@ -229,6 +229,16 @@ public class TreeGenerator : MonoBehaviour
         triangles.AddRange(new[] { 8, 6, 7 });
         triangles.AddRange(new[] { 9, 8, 1 });
 
+        // Deform the vertices
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            if (Random.Range(0f, 1f) < 2f)
+            {
+                var randomDistance = Random.Range(1f, 1.5f);
+                vertices[i] *= randomDistance;
+            }
+        }
+
         // Split vertices - makes a new vertex for every triangle
         // From http://answers.unity3d.com/questions/798510/flat-shading.html
         Vector3[] oldVertices = vertices.ToArray();
@@ -240,6 +250,8 @@ public class TreeGenerator : MonoBehaviour
             newVertices[i] = oldVertices[newTriangles[i]];
             newTriangles[i] = i;
         }
+
+        // Apply verts and tris to the mesh, and apply the mesh to the owner's meshfilter
         canopyMesh.vertices = newVertices;
         canopyMesh.triangles = newTriangles;
 
