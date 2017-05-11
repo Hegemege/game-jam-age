@@ -8,6 +8,8 @@ public class TreeGenerator : MonoBehaviour
     public GameObject BranchPrefab;
     public GameObject CanopyPrefab;
 
+    public float Scale;
+
     public Vector3[] trunkShapeVertices;
 
     public int MaxDepth;
@@ -52,6 +54,8 @@ public class TreeGenerator : MonoBehaviour
 
         // Generate the tree
         GenerateTree();
+
+        transform.localScale = Vector3.one * Scale;
     }
 
     void Start() 
