@@ -8,8 +8,8 @@ public class Canopy : MonoBehaviour
 
     private Vector3 startScale;
 
-    [HideInInspector]
-    public Vector3 TargetScale;
+    private Vector3 targetScale;
+    private float leaves;
 
     [HideInInspector]
     public bool SkipExpansion;
@@ -57,7 +57,7 @@ public class Canopy : MonoBehaviour
         if (SkipExpansion)
         {
             expandTimer = expandTime;
-            transform.localScale = TargetScale;
+            transform.localScale = targetScale;
         }
         else
         {
@@ -75,7 +75,7 @@ public class Canopy : MonoBehaviour
 
         var rate = Mathf.Clamp(expandTimer / expandTime, 0f, 1f);
 
-        transform.localScale = Vector3.Lerp(startScale, TargetScale, rate);
+        transform.localScale = Vector3.Lerp(startScale, targetScale * leaves, rate);
 
         // Mesh transition
         meshTransitionTimer += dt;
@@ -124,5 +124,27 @@ public class Canopy : MonoBehaviour
         meshTransitionTimer = 0f;
         startVerts = meshFilter.mesh.vertices;
         targetVerts = mesh.vertices;
+    }
+
+    public void SetScale(Vector3 newScale)
+    {
+        targetScale = newScale;
+    }
+
+    public void SetLeaves(float newLeaves, bool vanish)
+    {
+        // Scale the canopy based on the given value, and whether to complete vanish it
+        if (vanish)
+        {
+            targetScale = Vector3.zero;
+        }
+        else
+        {
+            leaves = newLeaves;
+        }
+
+        startScale = transform.localScale;
+
+        expandTimer = 0f;
     }
 }
