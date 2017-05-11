@@ -111,16 +111,26 @@ public class TreeScript : MonoBehaviour
     private void UseResources(Season season)
     {
         // Staying alive requires water and energy
-        Energy -= EnergyPerSecond * Time.deltaTime;
+		var energyDrain = EnergyPerSecond * Time.deltaTime;
+		if (energyDrain > 0) 
+		{
+			Debug.LogError("Energy drain is positive! (Tree gains energy instead of consuming it!)");
+		}
+		Energy += energyDrain;
         Energy = Mathf.Clamp(Energy, 0, MaxEnergy);
 
         // Temperature (and sunlight) also evaporates water
-        Water -= WaterPerSecond * Time.deltaTime;
+		var waterDrain = WaterPerSecond * Time.deltaTime;
+        Water += WaterPerSecond * Time.deltaTime;
         if (climate.GetTemperature() > 0)
         {
-            Water -= WaterPerTemperature * climate.GetTemperature() * Time.deltaTime;
+			waterDrain += WaterPerTemperature * climate.GetTemperature() * Time.deltaTime;
         }
-
+		if (waterDrain > 0) 
+		{
+			Debug.LogError("Water drain is positive! (Tree gains water instead of consuming it!)");
+		}
+		Water += waterDrain;
         //Water -= climate.GetSunlight() * WaterPerSunlight * Time.deltaTime;
         Water = Mathf.Clamp(Water, 0, MaxWater);
     }
