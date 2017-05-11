@@ -168,8 +168,6 @@ public class ClimateController : MonoBehaviour
         var prevRain = GetSeasonRain(prevSeason);
         var prevSun = GetSeasonSunlight(prevSeason);
 
-		Debug.Log ("Target: " + targetSeason);
-		Debug.Log ("Current: " + prevSeason);
         temperature = prevTemp + ratio * (targetTemp - prevTemp);
         rain = prevRain + ratio * (targetRain - prevRain);
         sunlight = prevSun + ratio * (targetSun - prevSun);
