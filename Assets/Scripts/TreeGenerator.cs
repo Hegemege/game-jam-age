@@ -13,7 +13,6 @@ public class TreeGenerator : MonoBehaviour
     public float Scale;
 
     public float size;
-    private float previousSize;
 
     public Vector3[] trunkShapeVertices;
 
@@ -58,19 +57,23 @@ public class TreeGenerator : MonoBehaviour
         // Initialize and store the random seed
         initialRandomState = Random.state;
 
-        RegenerateTree(false);
+        branches = new List<GameObject>();
+        canopies = new List<GameObject>();
+
+        RegenerateTree(false, true, false);
     }
 
     void Start() 
     {
-        
+        initialRandomState = Random.state;
+        RegenerateTree(false, true, true);
     }
     
     void Update() 
     {
         if (Input.GetKeyDown("r"))
         {
-            RegenerateTree(true);
+            RegenerateTree(true, false, true);
         }
     }
 
@@ -81,47 +84,25 @@ public class TreeGenerator : MonoBehaviour
     /// <param name="newLeaves"></param>
     public void SeasonalGrowth(float newSize, float newLeaves)
     {
-        previousSize = size;
-
         // If the size is large enough, update mesh
         if (Mathf.Abs(newSize - size) > 0.01f)
         {
-            StartCoroutine(GenerateSmooth(30, newSize, 0f, 3f));
+            size = newSize;
+            RegenerateTree(false, false, true);
         }
         
         // If leaves have changed, shrink or expand the canopies
         // TODO:
     }
 
-    IEnumerator GenerateSmooth(int steps, float newSize, float time, float duration)
-    {
-        var stepSize = duration / steps;
-        time += stepSize;
-
-        var rate = time / duration;
-
-        if (rate >= 1f)
-        {
-            size = newSize;
-            RegenerateTree(false);
-            yield break;
-        }
-
-        yield return new WaitForSeconds(stepSize);
-
-        size = previousSize + rate * (newSize - previousSize);
-        RegenerateTree(false);
-
-        StartCoroutine(GenerateSmooth(steps, newSize, time, duration));
-    }
-
-    private void RegenerateTree(bool canopyAnimation)
+    private void RegenerateTree(bool canopyAnimation, bool instant, bool updateOld)
     {
         //size = Random.Range(0.5f, 1.5f);
 
         transform.localScale = Vector3.one;
 
         // Destroy all children
+        /*
         foreach (var child in GetComponentsInChildren<Transform>())
         {
             if (child.gameObject != gameObject)
@@ -129,17 +110,43 @@ public class TreeGenerator : MonoBehaviour
                 Destroy(child.gameObject);
             }
         }
+        */
 
         Random.state = initialRandomState;
 
         // Generate initial tree params for mesh generation
         NewTreeParameters(TrunkLength);
 
-        branches = new List<GameObject>();
-        canopies = new List<GameObject>();
+        //branches = new List<GameObject>();
+        //canopies = new List<GameObject>();
 
-        // Generate the tree
-        GenerateTree(canopyAnimation);
+        if (updateOld)
+        {
+            // Update all branches
+            for (var i = 0; i < branches.Count; i++)
+            {
+                var branch = branches[i];
+
+                GenerateBranchMesh(branch, instant);
+
+                branch.GetComponent<Branch>().SetNewBranchPosition(instant);
+            }
+
+            // Update all canopies
+            for (var i = 0; i < canopies.Count; i++)
+            {
+                var canopy = canopies[i];
+
+                GenerateCanopyMesh(canopy, instant);
+
+                // Move canopies
+                canopy.GetComponent<Canopy>().SetNewCanopyPosition(instant);
+            }
+        }
+        else
+        {
+            GenerateTree(canopyAnimation, instant);
+        }
 
         transform.localScale = Vector3.one * Scale;
     }
@@ -193,16 +200,16 @@ public class TreeGenerator : MonoBehaviour
         }
     }
 
-    private void GenerateTree(bool canopyAnimation)
+    private void GenerateTree(bool canopyAnimation, bool instant)
     {
-        var trunk = GenerateBranch(gameObject, transform.position, Vector3.up, 0, TrunkStartThickness, TrunkInterval, TrunkLength);
+        var trunk = GenerateBranch(gameObject, transform.position, Vector3.up, 0, TrunkStartThickness, TrunkInterval, TrunkLength, instant, -1);
 
-        GenerateTreeRecursive(trunk);
+        GenerateTreeRecursive(trunk, instant);
 
-        GenerateCanopy(canopyAnimation);
+        GenerateCanopy(canopyAnimation, instant);
     }
 
-    private void GenerateTreeRecursive(GameObject parent)
+    private void GenerateTreeRecursive(GameObject parent, bool instant)
     {
         Branch branch = parent.GetComponent<Branch>();
 
@@ -225,13 +232,14 @@ public class TreeGenerator : MonoBehaviour
                 (1 + Random.Range(-RandomLengthVariance, 0)));
 
             NewTreeParameters(length);
-            var newBranch = GenerateBranch(parent, position, direction, depth, thickness, interval, length);
+
+            var newBranch = GenerateBranch(parent, position, direction, depth, thickness, interval, length, instant, i);
             
-            GenerateTreeRecursive(newBranch);
+            GenerateTreeRecursive(newBranch, instant);
         }
     }
 
-    private void GenerateCanopy(bool canopyAnimation)
+    private void GenerateCanopy(bool canopyAnimation, bool instant)
     {
         for (var i = 0; i < branches.Count; i++)
         {
@@ -245,10 +253,12 @@ public class TreeGenerator : MonoBehaviour
 
             // Scale the object
             var branchThickness = branch.GetComponent<Branch>().InitialThickness;
+
+
             canopy.transform.rotation = Random.rotation;
 
             // Generate the canopy mesh
-            GenerateCanopyMesh(canopy);
+            GenerateCanopyMesh(canopy, instant);
 
             // Give scaling instructions
             canopy.GetComponent<Canopy>().TargetScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness * size);
@@ -258,7 +268,7 @@ public class TreeGenerator : MonoBehaviour
         }
     }
 
-    private void GenerateCanopyMesh(GameObject owner)
+    private void GenerateCanopyMesh(GameObject owner, bool instant)
     {
         // Generate an icosahedron, then form it
         var canopyMesh = new Mesh();
@@ -343,10 +353,11 @@ public class TreeGenerator : MonoBehaviour
         canopyMesh.RecalculateBounds();
         canopyMesh.RecalculateNormals();
 
-        owner.GetComponent<MeshFilter>().mesh = canopyMesh;
+        owner.GetComponent<Canopy>().SetTargetMesh(canopyMesh, instant);
+        owner.GetComponent<Canopy>().OwnerBranch = owner.transform.parent.GetComponent<Branch>();
     }
 
-    private GameObject GenerateBranch(GameObject parent, Vector3 origin, Vector3 direction, int depth, float thickness, float interval, float length)
+    private GameObject GenerateBranch(GameObject parent, Vector3 origin, Vector3 direction, int depth, float thickness, float interval, float length, bool instant, int branchIndex)
     {
         var branch = Instantiate(BranchPrefab);
         branch.transform.parent = parent.transform;
@@ -357,20 +368,26 @@ public class TreeGenerator : MonoBehaviour
         branch.GetComponent<Branch>().InitialThickness = thickness;
         branch.GetComponent<Branch>().BranchLength = length;
         branch.GetComponent<Branch>().BranchInterval = interval;
+        branch.GetComponent<Branch>().ParentBranchIndex = branchIndex;
 
-        GenerateBranchMesh(branch);
+        if (branchIndex >= 0)
+        {
+            branch.GetComponent<Branch>().ParentBranch = parent.GetComponent<Branch>();
+        }
+
+        GenerateBranchMesh(branch, instant);
 
         branches.Add(branch);
 
         return branch;
     }
 
-    private void GenerateBranchMesh(GameObject owner)
+    private void GenerateBranchMesh(GameObject owner, bool instant)
     {
         // Get parameters from the owner branch object
         var depth = owner.GetComponent<Branch>().Depth;
         var initialThickness = owner.GetComponent<Branch>().InitialThickness;
-        var subBranches = Random.Range(BranchesPerDepthLow[depth], BranchesPerDepthHigh[depth]);
+        var subBranches = Random.Range(BranchesPerDepthHigh[depth], BranchesPerDepthHigh[depth]); // HACK: high not used because of random state breaking
 
         var branchLength = owner.GetComponent<Branch>().BranchLength;
         var interval = owner.GetComponent<Branch>().BranchInterval;
@@ -525,7 +542,7 @@ public class TreeGenerator : MonoBehaviour
         treeMesh.RecalculateBounds();
         treeMesh.RecalculateNormals();
 
-        owner.GetComponent<MeshFilter>().mesh = treeMesh;
+        owner.GetComponent<Branch>().SetTargetMesh(treeMesh, instant);
 
         owner.GetComponent<Branch>().BranchPositions = childPositions;
         owner.GetComponent<Branch>().BranchDirections = childDirections;
