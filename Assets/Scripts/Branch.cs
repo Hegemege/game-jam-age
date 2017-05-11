@@ -114,6 +114,12 @@ public class Branch : MonoBehaviour
 
         if (instant)
         {
+            // Hack, sometimes breaks
+            if (ParentBranchIndex > ParentBranch.BranchPositions.Count - 1)
+            {
+                ParentBranchIndex = ParentBranch.BranchPositions.Count - 1;
+            }
+
             transform.localPosition = ParentBranch.BranchPositions[ParentBranchIndex];
             return;
         }

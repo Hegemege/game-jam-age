@@ -13,6 +13,7 @@ public class TreeGenerator : MonoBehaviour
     public float Scale;
 
     public float size;
+    public float leaves;
 
     public Vector3[] trunkShapeVertices;
 
@@ -61,6 +62,7 @@ public class TreeGenerator : MonoBehaviour
         canopies = new List<GameObject>();
 
         RegenerateTree(false, true, false);
+        ExpandCanopies(true);
     }
 
     void Start() 
@@ -90,9 +92,58 @@ public class TreeGenerator : MonoBehaviour
             size = newSize;
             RegenerateTree(false, false, true);
         }
-        
+
         // If leaves have changed, shrink or expand the canopies
-        // TODO:
+        if (newLeaves >= leaves)
+        {
+            leaves = Mathf.Clamp(newLeaves, 0f, 1f);
+            // Expand canopies
+            ExpandCanopies(false);
+        }
+        else
+        {
+            leaves = Mathf.Clamp(newLeaves, 0f, 1f);
+            // Shrink canopies - shrink everything and make first X disappear
+            ShrinkCanopies();
+        }
+
+        // If both have increased, grow a new branch if possible
+
+    }
+
+    private void ExpandCanopies(bool all)
+    {
+        Debug.Log("Expand canopies");
+        Debug.Log(leaves);
+        // Force set the canopy size for the first X canopies
+        var highVanishIndex = (int)((canopies.Count - 1) * leaves);
+
+        if (all) highVanishIndex = canopies.Count - 1;
+
+        for (var i = 0; i <= highVanishIndex; i++)
+        {
+            var canopy = canopies[i];
+
+            canopy.GetComponent<Canopy>().SetLeaves(leaves, false);
+        }
+    }
+
+    private void ShrinkCanopies()
+    {
+        Debug.Log("Shrink canopies");
+        // Diminish last X canopies based on 1/leaves
+        var highVanishIndex = (int)((canopies.Count - 1) * leaves);
+
+        Debug.Log(highVanishIndex + " " + leaves);
+
+        for (var i = 0; i < canopies.Count; i++)
+        {
+            var canopy = canopies[i];
+
+            var vanish = i >= highVanishIndex;
+
+            canopy.GetComponent<Canopy>().SetLeaves(leaves, vanish);
+        }
     }
 
     private void RegenerateTree(bool canopyAnimation, bool instant, bool updateOld)
@@ -261,7 +312,7 @@ public class TreeGenerator : MonoBehaviour
             GenerateCanopyMesh(canopy, instant);
 
             // Give scaling instructions
-            canopy.GetComponent<Canopy>().TargetScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness * size);
+            canopy.GetComponent<Canopy>().SetScale(Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness * size));
             canopy.GetComponent<Canopy>().SkipExpansion = !canopyAnimation;
 
             canopies.Add(canopy);
