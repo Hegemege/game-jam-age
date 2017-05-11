@@ -26,7 +26,6 @@ public class ClimateController : MonoBehaviour
     private Text temperatureGauge;
     private Text yearText;
 
-
     [HideInInspector]
     public int Year;
 
@@ -125,7 +124,7 @@ public class ClimateController : MonoBehaviour
         if (seasonTimer > SeasonLength)
         {
             seasonTimer = 0;
-            currentSeason = GetNextSeason(currentSeason);
+            ChangeSeason(currentSeason, GetNextSeason(currentSeason));
         }
 
         // Interpolate temperature when the season is changing
@@ -162,7 +161,14 @@ public class ClimateController : MonoBehaviour
         sunlight = prevSun + ratio * (targetSun - prevSun);
     }
 
+    private void ChangeSeason(Season current, Season target)
+    {
+        // Invokes growth on the tree
+        // Spends energy
 
+        // And finally set the current season
+        currentSeason = target;
+    }
 
     // Helper methods
 
@@ -274,9 +280,9 @@ public class ClimateController : MonoBehaviour
         {
             if (obj)
             {
-                Color c = obj.GetComponent<SpriteRenderer>().color;
+                Color c = obj.GetComponent<Image>().color;
                 c.a = alpha;
-                obj.GetComponent<SpriteRenderer>().color = c;
+                obj.GetComponent<Image>().color = c;
             }
         }
     }
