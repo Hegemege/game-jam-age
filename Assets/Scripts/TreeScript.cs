@@ -29,6 +29,8 @@ public class TreeScript : MonoBehaviour
     public Vector2 AutumnEnergyTarget;
     public Vector2 WinterEnergyTarget;
 
+    private float seasonalSizeGain; // Size change for the next season
+    private float seasonalLeavesGain; // Change in leaves for the next season
     private float size;
     private float growthRate; // Current growth rate
 
@@ -44,9 +46,9 @@ public class TreeScript : MonoBehaviour
     public float MaxEnergy; // How much energy can be held in storage
     public float MaxWater; // How much water can be held in storage
 
-    public int InitialLeaves;
+    public float InitialLeaves;
     [HideInInspector]
-    public int Leaves;
+    public float Leaves;
 
     void Awake()
     {
@@ -123,28 +125,44 @@ public class TreeScript : MonoBehaviour
         Water = Mathf.Clamp(Water, 0, MaxWater);
     }
 
+    private float CalculateOptimality(float value, float min, float max)
+    {
+        // Expects values from 0 to 1
+        var optimalPeriodLength = max - min;
+        var mid = max - optimalPeriodLength / 2.0f;
+        var distanceFromMid = Mathf.Abs(value - mid);
+        var optimality = distanceFromMid - optimalPeriodLength / 2.0f;
+        return optimality;
+    }
+
     private void Grow(Season season)
     {
         var seasonParams = GetSeasonParamenters(season);
+        var waterParams = seasonParams[0];
+        var energyParams = seasonParams[1];
+        var waterOptimality = CalculateOptimality(Water / MaxWater, waterParams[0], waterParams[1]);
+        var energyOptimality = CalculateOptimality(Energy / MaxEnergy, energyParams[0], energyParams[1]);
 
         // Growth is affected by the current temperature
-        growthRate = climate.GetTemperature() * GrowthMultiplier;
+        seasonalSizeGain += climate.GetTemperature() * waterOptimality * energyOptimality * Time.deltaTime;
+        seasonalLeavesGain += climate.GetSunlight() * Time.deltaTime; // FIXME: Better logic for leaves
 
-        // Growing needs water and energy
-        growthRate = Mathf.Min(Water, Energy, growthRate);
-        growthRate = Mathf.Max(0, growthRate);
-        if (growthRate > 0)
-        {
-            // Growing consumes energy and water
-            Energy -= Time.deltaTime * growthRate;
-            Water -= Time.deltaTime * growthRate;
-            size += Time.deltaTime * growthRate;
-        }
+
     }
 
     public void SeasonalGrowth(Season nextSeason)
     {
-        // TODO
+        var generator = gameObject.GetComponent<TreeGenerator>();
+        if (seasonalSizeGain > 0)
+        {
+            size += seasonalSizeGain;
+        }
+
+        Debug.Log(size);
+        Leaves = Mathf.Clamp(seasonalLeavesGain, 0, 1);
+        generator.SeasonalGrowth(size, Leaves);
+
+
     }
 
     private Vector2[] GetSeasonParamenters(Season season)
@@ -152,7 +170,7 @@ public class TreeScript : MonoBehaviour
         switch (season)
         {
             case Season.Spring:
-                return new Vector2[] { SpringWaterTarget, SpringEnergyTarget};
+                return new Vector2[] { SpringWaterTarget, SpringEnergyTarget };
             case Season.Summer:
                 return new Vector2[] { SummerWaterTarget, SummerEnergyTarget };
             case Season.Autumn:
