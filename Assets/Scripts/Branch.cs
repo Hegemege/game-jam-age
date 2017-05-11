@@ -25,6 +25,9 @@ public class Branch : MonoBehaviour
     [HideInInspector]
     public float BranchInterval;
 
+    [HideInInspector]
+    public Vector3 CanopyPosition;
+
     void Awake() 
     {
         BranchPositions = new List<Vector3>();

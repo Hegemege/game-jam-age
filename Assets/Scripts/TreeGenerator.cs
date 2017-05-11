@@ -6,6 +6,7 @@ using UnityEngine;
 public class TreeGenerator : MonoBehaviour
 {
     public GameObject BranchPrefab;
+    public GameObject CanopyPrefab;
 
     public Vector3[] trunkShapeVertices;
 
@@ -117,6 +118,8 @@ public class TreeGenerator : MonoBehaviour
         var trunk = GenerateBranch(gameObject, transform.position, Vector3.up, 0, TrunkStartThickness, TrunkInterval, TrunkLength);
 
         GenerateTreeRecursive(trunk);
+
+        GenerateCanopy();
     }
 
     private void GenerateTreeRecursive(GameObject parent)
@@ -146,6 +149,104 @@ public class TreeGenerator : MonoBehaviour
             
             GenerateTreeRecursive(newBranch);
         }
+    }
+
+    private void GenerateCanopy()
+    {
+        for (var i = 0; i < branches.Count; i++)
+        {
+            var branch = branches[i];
+
+            var canopyOrigin = branch.GetComponent<Branch>().CanopyPosition;
+
+            var canopy = Instantiate(CanopyPrefab);
+            canopy.transform.parent = branch.transform;
+            canopy.transform.localPosition = canopyOrigin;
+
+            // Scale the object
+            var branchThickness = branch.GetComponent<Branch>().InitialThickness;
+            canopy.transform.rotation = Random.rotation;
+            canopy.transform.localScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness);
+
+            // Generate the canopy mesh
+            GenerateCanopyMesh(canopy);
+        }
+    }
+
+    private void GenerateCanopyMesh(GameObject owner)
+    {
+        // Generate an icosahedron, then form it
+        var canopyMesh = new Mesh();
+
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> triangles = new List<int>();
+
+        // Generate vertices
+        var t = (1f + Mathf.Sqrt(5f)) / 2f;
+        vertices.Add(new Vector3(-1, t, 0));
+        vertices.Add(new Vector3(1, t, 0));
+        vertices.Add(new Vector3(-1, -t, 0));
+        vertices.Add(new Vector3(1, -t, 0));
+
+        vertices.Add(new Vector3(0, -1, t));
+        vertices.Add(new Vector3(0, 1, t));
+        vertices.Add(new Vector3(0, -1, -t));
+        vertices.Add(new Vector3(0, 1, -t));
+
+        vertices.Add(new Vector3(t, 0, -1));
+        vertices.Add(new Vector3(t, 0, 1));
+        vertices.Add(new Vector3(-t, 0, -1));
+        vertices.Add(new Vector3(-t, 0, 1));
+
+        // Generate triangles
+        triangles.AddRange(new []{0, 11, 5});
+
+        // 5 faces around point 0
+        triangles.AddRange(new []{ 0, 11, 5 });
+        triangles.AddRange(new []{ 0, 5, 1 });
+        triangles.AddRange(new []{ 0, 1, 7 });
+        triangles.AddRange(new []{ 0, 7, 10 });
+        triangles.AddRange(new []{ 0, 10, 11 });
+
+        // 5 adjacent faces
+        triangles.AddRange(new[] { 1, 5, 9 });
+        triangles.AddRange(new[] { 5, 11, 4 });
+        triangles.AddRange(new[] { 11, 10, 2 });
+        triangles.AddRange(new[] { 10, 7, 6 });
+        triangles.AddRange(new[] { 7, 1, 8 });
+
+        // 5 faces around point 3
+        triangles.AddRange(new[] { 3, 9, 4 });
+        triangles.AddRange(new[] { 3, 4, 2 });
+        triangles.AddRange(new[] { 3, 2, 6 });
+        triangles.AddRange(new[] { 3, 6, 8 });
+        triangles.AddRange(new[] { 3, 8, 9 });
+
+        // 5 adjacent faces
+        triangles.AddRange(new[] { 4, 9, 5 });
+        triangles.AddRange(new[] { 2, 4, 11 });
+        triangles.AddRange(new[] { 6, 2, 10 });
+        triangles.AddRange(new[] { 8, 6, 7 });
+        triangles.AddRange(new[] { 9, 8, 1 });
+
+        // Split vertices - makes a new vertex for every triangle
+        // From http://answers.unity3d.com/questions/798510/flat-shading.html
+        Vector3[] oldVertices = vertices.ToArray();
+        int[] newTriangles = triangles.ToArray();
+        Vector3[] newVertices = new Vector3[newTriangles.Length];
+
+        for (int i = 0; i < newTriangles.Length; i++)
+        {
+            newVertices[i] = oldVertices[newTriangles[i]];
+            newTriangles[i] = i;
+        }
+        canopyMesh.vertices = newVertices;
+        canopyMesh.triangles = newTriangles;
+
+        canopyMesh.RecalculateBounds();
+        canopyMesh.RecalculateNormals();
+
+        owner.GetComponent<MeshFilter>().mesh = canopyMesh;
     }
 
     private GameObject GenerateBranch(GameObject parent, Vector3 origin, Vector3 direction, int depth, float thickness, float interval, float length)
@@ -180,7 +281,7 @@ public class TreeGenerator : MonoBehaviour
         // Clear, initialize, assign mesh
         var treeMesh = new Mesh();
 
-        // Use lists becasue we dont know the final size, convert to arrays when assigning to the mesh
+        // Use lists because we dont know the final size, convert to arrays when assigning to the mesh
         List<Vector3> vertices = new List<Vector3>();
         List<int> triangles = new List<int>();
 
@@ -202,6 +303,8 @@ public class TreeGenerator : MonoBehaviour
         }
 
         childRingIndices.Sort();
+
+        var canopyPosition = Vector3.zero;
 
         // Generate the geometry
         for (int i = 0; i < branchLength - 1; i++)
@@ -250,6 +353,8 @@ public class TreeGenerator : MonoBehaviour
                 vertexPos1 *= ringThickness * trunkThickness[i][shapeIndex];
                 vertexPos1 += accumulatedBasePosition;
                 vertexPos1 += direction * i * interval;
+
+                canopyPosition = vertexPos1;
 
                 // Top left
                 var vertexPos2 = trunkShapeVertices[shapeIndex];
@@ -328,5 +433,6 @@ public class TreeGenerator : MonoBehaviour
         owner.GetComponent<Branch>().BranchPositions = childPositions;
         owner.GetComponent<Branch>().BranchDirections = childDirections;
         owner.GetComponent<Branch>().BranchThicknesses = childThicknesses;
+        owner.GetComponent<Branch>().CanopyPosition = canopyPosition;
     }
 }
