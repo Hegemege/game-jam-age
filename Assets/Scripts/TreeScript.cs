@@ -189,7 +189,7 @@ public class TreeScript : MonoBehaviour
 		// Update parameters for the TreeGenerator
         Debug.Log(size);
 		var generator = gameObject.GetComponent<TreeGenerator>();
-        Leaves = Mathf.Clamp(seasonalLeavesGain / seasonLength, 0, 1);
+        //Leaves = Mathf.Clamp(seasonalLeavesGain / seasonLength, 0, 1);
         generator.SeasonalGrowth(size, Leaves);
     }
 

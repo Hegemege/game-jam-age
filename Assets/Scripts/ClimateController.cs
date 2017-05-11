@@ -25,6 +25,7 @@ public class ClimateController : MonoBehaviour
 
     private Text temperatureGauge;
     private Text yearText;
+    private ColorChanger seasonColors;
 
     [HideInInspector]
     public int Year;
@@ -68,7 +69,7 @@ public class ClimateController : MonoBehaviour
     {
         temperatureGauge = GameObject.Find("TemperatureGauge").GetComponent<Text>();
         yearText = GameObject.Find("YearText").GetComponent<Text>();
-
+        seasonColors = GetComponentInChildren<ColorChanger>();
 
         Year = 1;
         currentSeason = StartingSeason;
@@ -147,6 +148,8 @@ public class ClimateController : MonoBehaviour
 
     private void InterpolateParameters(float ratio, Season targetSeason)
     {
+        seasonColors.InterpolateColors(ratio, targetSeason);
+
         var targetTemp = GetSeasonTemperature(targetSeason);
         var targetRain = GetSeasonRain(targetSeason);
         var targetSun = GetSeasonSunlight(targetSeason);

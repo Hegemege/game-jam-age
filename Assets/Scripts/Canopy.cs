@@ -36,8 +36,24 @@ public class Canopy : MonoBehaviour
     private Vector3 startCanopyPosition;
     private Vector3 targetCanopyPosition;
 
+    private ColorChanger colors;
+    private MeshRenderer meshRenderer;
+
+    private Color startColor;
+
     void Awake()
     {
+        meshRenderer = GetComponent<MeshRenderer>();
+        colors = GameObject.Find("ClimateController").GetComponent<ColorChanger>();
+
+        startColor = meshRenderer.material.color;
+        float startH;
+        float startV;
+        float startS;
+        Color.RGBToHSV(startColor, out startH, out startV, out startS);
+
+        startColor = Random.ColorHSV(startH + -0.1f, startH + 0.1f, 0.5f, 0.5f);
+
         originalScale = new Vector3(0.1f, 0.1f, 0.1f);
 
         expandTime = ExpandTime + Random.Range(-ExpandRandomness, ExpandRandomness);
@@ -70,6 +86,8 @@ public class Canopy : MonoBehaviour
     
     void Update()
     {
+        SetColor();
+
         var dt = Time.deltaTime;
         expandTimer += dt;
 
@@ -146,5 +164,10 @@ public class Canopy : MonoBehaviour
         startScale = transform.localScale;
 
         expandTimer = 0f;
+    }
+
+    private void SetColor()
+    {
+        meshRenderer.material.color = (startColor + colors.CurrentLightColor) / 2f;
     }
 }
