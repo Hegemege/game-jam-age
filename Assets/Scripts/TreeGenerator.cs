@@ -24,6 +24,7 @@ public class TreeGenerator : MonoBehaviour
     public float IntervalVariance;
     public float BranchLengthFalloff;
     public float BranchIntervalFalloff;
+    public float BranchThicknessFalloff;
 
     public float TrunkStartThickness;
     public float TrunkShrinkingFactor;
@@ -31,6 +32,7 @@ public class TreeGenerator : MonoBehaviour
     // Randomness
     public float RandomRingThicknessVariance;
     public float RandomVertexThicknessVariance;
+    public float RandomLengthVariance;
 
     public float RingBaseDrift;
 
@@ -42,7 +44,7 @@ public class TreeGenerator : MonoBehaviour
 
     void Awake()
     {
-        NewTreeParameters();
+        NewTreeParameters(TrunkLength);
 
         // Initialize branches
         branches = new List<GameObject>();
@@ -61,17 +63,17 @@ public class TreeGenerator : MonoBehaviour
         
     }
 
-    private void NewTreeParameters()
+    private void NewTreeParameters(int length)
     {
         // Initialize the trunk thickness
         trunkThickness = new List<List<float>>();
-        for (var i = 0; i < TrunkLength; i++)
+        for (var i = 0; i < length; i++)
         {
             trunkThickness.Add(new List<float>());
         }
 
         // Generate randomness into the trunk's thickness
-        for (var i = 0; i < TrunkLength; i++)
+        for (var i = 0; i < length; i++)
         {
             var ringThickness = 1 + Random.Range(-RandomRingThicknessVariance, RandomRingThicknessVariance);
 
@@ -79,7 +81,7 @@ public class TreeGenerator : MonoBehaviour
             {
                 var vertexThickness = Random.Range(0f, RandomVertexThicknessVariance);
 
-                vertexThickness *= 1 - i / (float)TrunkLength;
+                vertexThickness *= 1 - i / (float)length;
 
                 trunkThickness[i].Add(ringThickness + vertexThickness);
             }
@@ -87,7 +89,7 @@ public class TreeGenerator : MonoBehaviour
 
         // Generate random trunk intervals
         intervalVariances = new List<float>();
-        for (var i = 0; i < TrunkLength; i++)
+        for (var i = 0; i < length; i++)
         {
             intervalVariances.Add(TrunkInterval + Random.Range(-IntervalVariance, IntervalVariance));
         }
@@ -95,15 +97,15 @@ public class TreeGenerator : MonoBehaviour
         // Base position drift
         ringBasePositions = new List<Vector3>();
         Vector3 basePosition = Vector3.zero;
-        for (var i = 0; i < TrunkLength; i++)
+        for (var i = 0; i < length; i++)
         {
             ringBasePositions.Add(basePosition);
 
             var accX = Random.Range(-RingBaseDrift, RingBaseDrift);
             var accZ = Random.Range(-RingBaseDrift, RingBaseDrift);
 
-            accX *= 1 - i / (float)TrunkLength;
-            accZ *= 1 - i / (float)TrunkLength;
+            accX *= 1 - i / (float)length;
+            accZ *= 1 - i / (float)length;
 
             basePosition.x += accX;
             basePosition.z += accZ;
@@ -132,12 +134,14 @@ public class TreeGenerator : MonoBehaviour
         {
             var position = branch.BranchPositions[i];
             var direction = branch.BranchDirections[i];
-            var thickness = branch.BranchThicknesses[i];
+            var thickness = branch.BranchThicknesses[i] * BranchThicknessFalloff;
             var depth = branch.Depth + 1;
             var interval = branch.BranchInterval * BranchIntervalFalloff;
-            var length = branch.BranchLength * BranchLengthFalloff;
+            var length = (int)(branch.BranchLength * 
+                BranchLengthFalloff * 
+                (1 + Random.Range(-RandomLengthVariance, 0)));
 
-            NewTreeParameters();
+            NewTreeParameters(length);
             var newBranch = GenerateBranch(parent, position, direction, depth, thickness, interval, length);
             
             GenerateTreeRecursive(newBranch);
@@ -205,7 +209,9 @@ public class TreeGenerator : MonoBehaviour
             var ringThickness = initialThickness * Mathf.Pow(TrunkShrinkingFactor, i);
             var nextRingThickness = initialThickness * Mathf.Pow(TrunkShrinkingFactor, i + 1);
 
-            var nextRingBasePosition = accumulatedBasePosition + ringBasePositions[i] +
+            var ringPosition = ringBasePositions[i] * depth;
+
+            var nextRingBasePosition = accumulatedBasePosition + ringPosition +
                                        direction * intervalVariances[i];
 
             float twist = 20f * i / (float)branchLength;
@@ -288,14 +294,14 @@ public class TreeGenerator : MonoBehaviour
                     {
                         branchVertexPositions.Add(accumulatedBasePosition + direction * i * interval);
                         //branchVertexPositions.Add(vertexPos1);
-                        branchVertexDirections.Add((direction + Random.onUnitSphere).normalized);
+                        branchVertexDirections.Add((direction + Random.onUnitSphere*0.75f).normalized);
                         //branchVertexDirections.Add((Quaternion.AngleAxis(twist, Vector3.up) * trunkShapeVertices[shapeIndex]).normalized);
                         branchVertexThicknesses.Add(ringThickness * trunkThickness[i][shapeIndex]);
                     }
                 }
 
             }
-            accumulatedBasePosition += ringBasePositions[i] + direction * intervalVariances[i];
+            accumulatedBasePosition += ringPosition + direction * intervalVariances[i];
 
             // Generate sub branches, amount based on matching index
             childPositions.AddRange(branchVertexPositions);
