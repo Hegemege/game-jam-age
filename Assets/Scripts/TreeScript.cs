@@ -19,15 +19,29 @@ public class TreeScript : MonoBehaviour
     public float EnergyGain;
     public float WinterWaterGain;
     public float WinterEnergyGain;
-    public Vector2 SpringWaterTarget;
+
+	public Vector2 OptimalTemperature; // Affects growth
+
+	public Vector2 SpringWaterTarget; // Affects leaves and growth
     public Vector2 SummerWaterTarget;
     public Vector2 AutumnWaterTarget;
     public Vector2 WinterWaterTarget;
 
-    public Vector2 SpringEnergyTarget;
+	public Vector2 SpringEnergyTarget; // Affects growth
     public Vector2 SummerEnergyTarget;
     public Vector2 AutumnEnergyTarget;
     public Vector2 WinterEnergyTarget;
+
+	public Vector2 SpringSunTarget; // Affects leaves
+	public Vector2 SummerSunTarget;
+	public Vector2 AutumnSunTarget;
+	public Vector2 WinterSunTarget;
+
+	public float SpringLeavesModifier;
+	public float SummerLeavesModifier;
+	public float AutumnLeavesModifier;
+	public float WinterLeavesModifier;
+	public float WinterLeavesMultiplier;
 
     private float seasonalSizeGain; // Size change for the next season
     private float seasonalLeavesGain; // Change in leaves for the next season
@@ -138,10 +152,17 @@ public class TreeScript : MonoBehaviour
     private float CalculateOptimality(float value, float min, float max)
     {
         // Expects values from 0f to 1f
-
+		if (min > max) 
+		{
+			Debug.LogError ("Minimum optimal value must be higher than maximum value! min=" + min.ToString () + " max=" + max.ToString ());
+		}
 		// Returns 1 if value is within range, and less than 1 otherwise
 		var distance = 0f;
-		if (value < min) 
+		if (min == 0 && max == 0) 
+		{
+			return 0;
+		}
+		else if (value < min) 
 		{
 			distance = min - value;
 		} 
@@ -150,66 +171,113 @@ public class TreeScript : MonoBehaviour
 			distance = value - max;
 		}
 		var optimality = 1 - distance;
-        return optimality;
+		return Mathf.Clamp(optimality, 0, 1);;
     }
 
     private void Grow(Season season)
     {
-        var seasonParams = GetSeasonParamenters(season);
-        var waterParams = seasonParams[0];
-        var energyParams = seasonParams[1];
+		var waterParams = GetSeasonWaterTarget (season);
+		var energyParams = GetSeasonEnergyTarget (season);
         var waterOptimality = CalculateOptimality(Water / MaxWater, waterParams[0], waterParams[1]);
         var energyOptimality = CalculateOptimality(Energy / MaxEnergy, energyParams[0], energyParams[1]);
-		var temperatureOptimality = CalculateOptimality(climate.GetTemperature() / 100f, 0.20f, 0.40f);  // Optimal temperature is between 20 and 40 degrees
+		var temperatureOptimality = CalculateOptimality(climate.GetTemperature() / 100f, OptimalTemperature[0], OptimalTemperature[1]);
 
 		waterOptimality = Mathf.Clamp(waterOptimality, 0, 1);
 		energyOptimality = Mathf.Clamp(energyOptimality, 0, 1);
 		temperatureOptimality = Mathf.Clamp(temperatureOptimality, 0, 1);
 
-        // Growth is affected by the current temperature
+        // Growth is affected by temperature, energy and water
 		var sizeGain = temperatureOptimality * waterOptimality * energyOptimality; // Always between 0 and 1
 		seasonalSizeGain += sizeGain * Time.deltaTime;
 
-		var sunlightOptimality = CalculateOptimality(climate.GetSunlight(), 0.60f, 1f);
-		seasonalLeavesGain += sunlightOptimality * Time.deltaTime;
 
-
+		// Leaves are affected by water and sunlight
+		var sunlightRange = GetSeasonSunlightTarget (season);
+		var sunlightOptimality = CalculateOptimality(climate.GetSunlight(), sunlightRange[0], sunlightRange[1]);
+		seasonalLeavesGain += waterOptimality * sunlightOptimality * Time.deltaTime;
     }
 
-	public void SeasonalGrowth(Season nextSeason, float seasonLength)
+	public void SeasonalGrowth(Season currentSeason, Season nextSeason, float seasonLength)
     {
 		// Scale growth variables by seasonLenght (to range of [-1, 1])
 		var sizeIncrease = Mathf.Clamp(seasonalSizeGain / seasonLength, 0, 1);  // Size cannot decrease
-		Leaves = Mathf.Clamp(seasonalLeavesGain / seasonLength, 0, 1); // Leaves cannot be negative
+		var leavesMultiplier = seasonalLeavesGain / seasonLength; // Multiplier from parameter optimality [0, 1]
+		leavesMultiplier = Mathf.Clamp (leavesMultiplier * 2, 0.5f, 1.5f);
+		leavesMultiplier += GetSeasonLeavesModifier(currentSeason);
+
+		if (currentSeason == Season.Winter) 
+		{
+			// Force a constant change for winter (Preferably 1, for no changes at all)
+			leavesMultiplier = WinterLeavesMultiplier; 
+		}
+
+		Leaves = Mathf.Clamp(Leaves * leavesMultiplier, 0, 1);
 		size += sizeIncrease;
 		seasonalSizeGain = 0;
 		seasonalLeavesGain = 0;
 
 
 		// Update parameters for the TreeGenerator
-        Debug.Log(size);
+		Debug.Log("Current Leaves: " + Leaves.ToString("F2") + " (previous multiplier: " + leavesMultiplier.ToString("F2") + ")");
 		var generator = gameObject.GetComponent<TreeGenerator>();
         //Leaves = Mathf.Clamp(seasonalLeavesGain / seasonLength, 0, 1);
-        generator.SeasonalGrowth(size, Leaves, nextSeason);
+		generator.SeasonalGrowth(size, Leaves, nextSeason);
     }
 
-    private Vector2[] GetSeasonParamenters(Season season)
+    private Vector2[] GetSeasonParameters(Season season)
     {
         switch (season)
         {
             case Season.Spring:
-                return new Vector2[] { SpringWaterTarget, SpringEnergyTarget };
+                return new Vector2[] { SpringWaterTarget, SpringEnergyTarget, SpringSunTarget};
             case Season.Summer:
-                return new Vector2[] { SummerWaterTarget, SummerEnergyTarget };
+				return new Vector2[] { SummerWaterTarget, SummerEnergyTarget, SummerSunTarget};
             case Season.Autumn:
-                return new Vector2[] { AutumnWaterTarget, AutumnEnergyTarget };
+				return new Vector2[] { AutumnWaterTarget, AutumnEnergyTarget, AutumnSunTarget};
             case Season.Winter:
-                return new Vector2[] { WinterWaterTarget, WinterEnergyTarget };
+                return new Vector2[] { WinterWaterTarget, WinterEnergyTarget, WinterSunTarget};
             default:
                 Debug.LogError("Unknown season!" + season);
-                return new Vector2[] { SummerWaterTarget, SummerEnergyTarget };
+                return new Vector2[] { SummerWaterTarget, SummerEnergyTarget, SummerSunTarget};
         }
     }
+
+	private Vector2 GetSeasonWaterTarget(Season season) 
+	{
+		var parameters = GetSeasonParameters(season);
+		return parameters [0];
+	}
+		
+
+	private Vector2 GetSeasonEnergyTarget(Season season) 
+	{
+		var parameters = GetSeasonParameters(season);
+		return parameters [1];
+	}
+
+	private Vector2 GetSeasonSunlightTarget(Season season) 
+	{
+		var parameters = GetSeasonParameters(season);
+		return parameters [2];
+	}
+
+	private float GetSeasonLeavesModifier(Season season) 
+	{
+		switch (season)
+		{
+			case Season.Spring:
+				return SpringLeavesModifier;
+			case Season.Summer:
+				return SummerLeavesModifier;
+			case Season.Autumn:
+				return AutumnLeavesModifier;
+			case Season.Winter:
+				return WinterLeavesModifier;
+			default:
+				Debug.LogError("Unknown season!" + season);
+				return SpringLeavesModifier;
+		}
+	}
 
 
 }
