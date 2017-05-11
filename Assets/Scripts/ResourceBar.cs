@@ -15,6 +15,7 @@ public class ResourceBar : MonoBehaviour {
     void Awake()
     {
         slider = gameObject.GetComponent<Slider>();
+		Tree = GameObject.Find ("Tree").GetComponent<TreeScript> ();
         
         if (ShowEnergy)
         {

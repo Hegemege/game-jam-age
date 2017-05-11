@@ -69,7 +69,16 @@ public class ClimateController : MonoBehaviour
     {
         temperatureGauge = GameObject.Find("TemperatureGauge").GetComponent<Text>();
         yearText = GameObject.Find("YearText").GetComponent<Text>();
+
         seasonColors = GetComponentInChildren<ColorChanger>();
+
+
+		var sunSlider = GameObject.Find("SunSlider").GetComponent<Slider>();
+		sunSlider.onValueChanged.AddListener((value)=>{SunlightModifier = value;});
+		var rainSlider = GameObject.Find("RainSlider").GetComponent<Slider>();
+		rainSlider.onValueChanged.AddListener((value)=>{RainModifier = value;});
+
+
 
         Year = 1;
         currentSeason = StartingSeason;
