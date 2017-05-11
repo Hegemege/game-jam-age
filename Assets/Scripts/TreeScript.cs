@@ -127,11 +127,19 @@ public class TreeScript : MonoBehaviour
 
     private float CalculateOptimality(float value, float min, float max)
     {
-        // Expects values from 0 to 1
-        var optimalPeriodLength = max - min;
-        var mid = max - optimalPeriodLength / 2.0f;
-        var distanceFromMid = Mathf.Abs(value - mid);
-        var optimality = distanceFromMid - optimalPeriodLength / 2.0f;
+        // Expects values from 0f to 1f
+
+		// Returns 1 if value is within range, and less than 1 otherwise
+		var distance = 0f;
+		if (value < min) 
+		{
+			distance = min - value;
+		} 
+		else if (value > max) 
+		{
+			distance = value - max;
+		}
+		var optimality = 1 - distance;
         return optimality;
     }
 
@@ -144,18 +152,13 @@ public class TreeScript : MonoBehaviour
         var energyOptimality = CalculateOptimality(Energy / MaxEnergy, energyParams[0], energyParams[1]);
 		var temperatureOptimality = CalculateOptimality(climate.GetTemperature() / 100f, 0.20f, 0.40f);  // Optimal temperature is between 20 and 40 degrees
 
-		waterOptimality = Mathf.Clamp(waterOptimality, -1, 1);
-		energyOptimality = Mathf.Clamp(energyOptimality, -1, 1);
-		temperatureOptimality = Mathf.Clamp(temperatureOptimality, -1, 1);
+		waterOptimality = Mathf.Clamp(waterOptimality, 0, 1);
+		energyOptimality = Mathf.Clamp(energyOptimality, 0, 1);
+		temperatureOptimality = Mathf.Clamp(temperatureOptimality, 0, 1);
 
         // Growth is affected by the current temperature
-		var sign = 1;
-		if (waterOptimality < 0 || energyOptimality < 0 || temperatureOptimality < 0) 
-		{
-			// Check the sign separately to avoid double negatives
-			sign = -1;
-		}
-		seasonalSizeGain += Mathf.Abs(temperatureOptimality * waterOptimality * energyOptimality * Time.deltaTime) * sign; // Always between -1 and 1
+		var sizeGain = temperatureOptimality * waterOptimality * energyOptimality; // Always between 0 and 1
+		seasonalSizeGain += sizeGain * Time.deltaTime;
 
 		var sunlightOptimality = CalculateOptimality(climate.GetSunlight(), 0.60f, 1f);
 		seasonalLeavesGain += sunlightOptimality * Time.deltaTime;
