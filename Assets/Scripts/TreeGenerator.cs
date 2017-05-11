@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class TreeGenerator : MonoBehaviour
 {
@@ -9,6 +11,8 @@ public class TreeGenerator : MonoBehaviour
     public GameObject CanopyPrefab;
 
     public float Scale;
+
+    public float size;
 
     public Vector3[] trunkShapeVertices;
 
@@ -45,17 +49,14 @@ public class TreeGenerator : MonoBehaviour
 
     private List<GameObject> branches;
 
+    private Random.State initialRandomState;
+
     void Awake()
     {
-        NewTreeParameters(TrunkLength);
+        // Initialize and store the random seed
+        initialRandomState = Random.state;
 
-        // Initialize branches
-        branches = new List<GameObject>();
-
-        // Generate the tree
-        GenerateTree();
-
-        transform.localScale = Vector3.one * Scale;
+        RegenerateTree();
     }
 
     void Start() 
@@ -65,7 +66,39 @@ public class TreeGenerator : MonoBehaviour
     
     void Update() 
     {
-        
+        if (Input.GetKeyDown("r"))
+        {
+            RegenerateTree();
+        }
+    }
+
+    public void RegenerateTree()
+    {
+        //size = Random.Range(0.5f, 1.5f);
+
+        transform.localScale = Vector3.one;
+
+        // Destroy all children
+        foreach (var child in GetComponentsInChildren<Transform>())
+        {
+            if (child.gameObject != gameObject)
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        Random.state = initialRandomState;
+
+        // Generate initial tree params for mesh generation
+        NewTreeParameters(TrunkLength);
+
+        // Initialize branches
+        branches = new List<GameObject>();
+
+        // Generate the tree
+        GenerateTree();
+
+        transform.localScale = Vector3.one * Scale;
     }
 
     private void NewTreeParameters(int length)
@@ -88,7 +121,7 @@ public class TreeGenerator : MonoBehaviour
 
                 vertexThickness *= 1 - i / (float)length;
 
-                trunkThickness[i].Add(ringThickness + vertexThickness);
+                trunkThickness[i].Add((ringThickness + vertexThickness) * Mathf.Sqrt(size));
             }
         }
 
@@ -106,8 +139,8 @@ public class TreeGenerator : MonoBehaviour
         {
             ringBasePositions.Add(basePosition);
 
-            var accX = Random.Range(-RingBaseDrift, RingBaseDrift);
-            var accZ = Random.Range(-RingBaseDrift, RingBaseDrift);
+            var accX = Random.Range(-RingBaseDrift, RingBaseDrift) * size;
+            var accZ = Random.Range(-RingBaseDrift, RingBaseDrift) * size;
 
             accX *= 1 - i / (float)length;
             accZ *= 1 - i / (float)length;
@@ -170,7 +203,7 @@ public class TreeGenerator : MonoBehaviour
             // Scale the object
             var branchThickness = branch.GetComponent<Branch>().InitialThickness;
             canopy.transform.rotation = Random.rotation;
-            canopy.transform.localScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness);
+            canopy.transform.localScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness * size);
 
             // Generate the canopy mesh
             GenerateCanopyMesh(canopy);
