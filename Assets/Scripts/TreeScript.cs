@@ -7,8 +7,8 @@ using UnityEngine.UI;
 public class TreeScript : MonoBehaviour
 {
     private ClimateController climate;
-    private Text energyGauge;
-    private Text waterGauge;
+    private Text energyText;
+    private Text waterText;
 
     private float size;
     private float growthRate; // Current growth rate
@@ -31,8 +31,8 @@ public class TreeScript : MonoBehaviour
 
     void Awake()
     {
-        waterGauge = GameObject.Find("WaterGauge").GetComponent<Text>();
-        energyGauge = GameObject.Find("EnergyGauge").GetComponent<Text>();
+        waterText = GameObject.Find("WaterText").GetComponent<Text>();
+        energyText = GameObject.Find("EnergyText").GetComponent<Text>();
         climate = GameObject.Find("ClimateController").GetComponent<ClimateController>();
         Leaves = InitialLeaves;
         Water = InitialWater;
@@ -48,8 +48,8 @@ public class TreeScript : MonoBehaviour
 	
 	void Update ()
     {
-        energyGauge.text = "Energy: " + Energy.ToString("F1");
-        waterGauge.text = "Water: " + Water.ToString("F1");
+        energyText.text = "Energy: " + Energy.ToString("F1");
+        waterText.text = "Water: " + Water.ToString("F1");
 
         Photosynthesis();
         HandleWater();
