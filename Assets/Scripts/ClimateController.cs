@@ -141,7 +141,7 @@ public class ClimateController : MonoBehaviour
         // Interpolation starts at the end of each season
         var midSeasonTime = SeasonLength - SeasonInterpolationLength;
         var time = seasonTimer - midSeasonTime;
-        var ratio = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1); // Weight stays 0, until the season starts to change
+        var ratio = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1); // Ratio stays 0, until the season starts to change
         InterpolateParameters(ratio, GetNextSeason(currentSeason));
 
         // Change the background
@@ -168,6 +168,8 @@ public class ClimateController : MonoBehaviour
         var prevRain = GetSeasonRain(prevSeason);
         var prevSun = GetSeasonSunlight(prevSeason);
 
+		Debug.Log ("Target: " + targetSeason);
+		Debug.Log ("Current: " + prevSeason);
         temperature = prevTemp + ratio * (targetTemp - prevTemp);
         rain = prevRain + ratio * (targetRain - prevRain);
         sunlight = prevSun + ratio * (targetSun - prevSun);
@@ -223,7 +225,12 @@ public class ClimateController : MonoBehaviour
     private Season GetPrevSeason(Season season)
     {
         int s = SeasonToInt(season);
-        s = Mathf.Abs(s - 1) % 4;
+		s--;
+		if (s < 0) 
+		{
+			s = 3;
+		}
+
         return IntToSeason(s);
     }
 
