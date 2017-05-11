@@ -13,6 +13,7 @@ public class TreeGenerator : MonoBehaviour
     public float Scale;
 
     public float size;
+    private float previousSize;
 
     public Vector3[] trunkShapeVertices;
 
@@ -72,7 +73,39 @@ public class TreeGenerator : MonoBehaviour
         }
     }
 
-    public void RegenerateTree()
+    /// <summary>
+    /// newSize is relative to a base value (1f). newLeaves is the amount of leaves (0f to 1f).
+    /// </summary>
+    /// <param name="newSize"></param>
+    /// <param name="newLeaves"></param>
+    public void SeasonalGrowth(float newSize, float newLeaves)
+    {
+        previousSize = size;
+
+        StartCoroutine(GenerateSmooth(30, newSize, 0f, 3f));
+    }
+
+    IEnumerator GenerateSmooth(int steps, float newSize, float time, float duration)
+    {
+        var stepSize = duration / steps;
+        time += stepSize;
+
+        var rate = time / duration;
+
+        if (rate >= 1f)
+        {
+            yield break;
+        }
+
+        yield return new WaitForSeconds(stepSize);
+
+        size = previousSize + rate * (newSize - previousSize);
+        RegenerateTree();
+
+        StartCoroutine(GenerateSmooth(steps, newSize, time, duration));
+    }
+
+    private void RegenerateTree()
     {
         //size = Random.Range(0.5f, 1.5f);
 
