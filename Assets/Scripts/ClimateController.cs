@@ -18,6 +18,10 @@ public class ClimateController : MonoBehaviour
     public GameObject SummerBG;
     public GameObject AutumnBG;
     public GameObject WinterBG;
+    public GameObject SpringFront;
+    public GameObject SummerFront;
+    public GameObject AutumnFront;
+    public GameObject WinterFront;
 
     private Text temperatureGauge;
     private Text yearText;
@@ -72,10 +76,10 @@ public class ClimateController : MonoBehaviour
         SeasonInterpolationLength = Mathf.Clamp(SeasonInterpolationLength, 0, SeasonLength);
         InterpolateParameters(1, currentSeason);
 
-        SetSeasonBGAlpha(0, Season.Autumn);
-        SetSeasonBGAlpha(0, Season.Summer);
-        SetSeasonBGAlpha(0, Season.Spring);
-        SetSeasonBGAlpha(0, Season.Winter);
+        SetSeasonImgAlpha(0, Season.Autumn);
+        SetSeasonImgAlpha(0, Season.Summer);
+        SetSeasonImgAlpha(0, Season.Spring);
+        SetSeasonImgAlpha(0, Season.Winter);
 
         UpdateSeason();
     }
@@ -128,12 +132,12 @@ public class ClimateController : MonoBehaviour
         // Interpolation starts at the end of each season
         var midSeasonTime = SeasonLength - SeasonInterpolationLength;
         var time = seasonTimer - midSeasonTime;
-        var weight = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1); // Weight stays 0, until the season starts to change
-        InterpolateParameters(weight, GetNextSeason(currentSeason));
+        var ratio = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1); // Weight stays 0, until the season starts to change
+        InterpolateParameters(ratio, GetNextSeason(currentSeason));
 
         // Change the background
-        SetSeasonBGAlpha((1 - weight), currentSeason);
-        SetSeasonBGAlpha(weight, GetNextSeason(currentSeason));
+        SetSeasonImgAlpha((1 - ratio), currentSeason);
+        SetSeasonImgAlpha(ratio, GetNextSeason(currentSeason));
         
 
         // Adjust parameters according to user input
@@ -142,7 +146,7 @@ public class ClimateController : MonoBehaviour
         sunlight *= (1 + (SunlightModifier * SunlightStepSize)); 
     }
 
-    private void InterpolateParameters(float weight, Season targetSeason)
+    private void InterpolateParameters(float ratio, Season targetSeason)
     {
         var targetTemp = GetSeasonTemperature(targetSeason);
         var targetRain = GetSeasonRain(targetSeason);
@@ -153,9 +157,9 @@ public class ClimateController : MonoBehaviour
         var prevRain = GetSeasonRain(prevSeason);
         var prevSun = GetSeasonSunlight(prevSeason);
 
-        temperature = prevTemp + weight * (targetTemp - prevTemp);
-        rain = prevRain + weight * (targetRain - prevRain);
-        sunlight = prevSun + weight * (targetSun - prevSun);
+        temperature = prevTemp + ratio * (targetTemp - prevTemp);
+        rain = prevRain + ratio * (targetRain - prevRain);
+        sunlight = prevSun + ratio * (targetSun - prevSun);
     }
 
 
@@ -245,30 +249,36 @@ public class ClimateController : MonoBehaviour
         }
     }
 
-    private GameObject GetBackgroundImage(Season season)
+    private GameObject[] GetSeasonImages(Season season)
     {
         switch (season)
         {
             case Season.Spring:
-                return SpringBG;
+                return new GameObject[] { SpringBG, SpringFront };
             case Season.Summer:
-                return SummerBG;
+                return new GameObject[] { SummerBG, SummerFront };
             case Season.Autumn:
-                return AutumnBG;
+                return new GameObject[] { AutumnBG, AutumnFront };
             case Season.Winter:
-                return WinterBG;
+                return new GameObject[] { WinterBG, WinterFront };
             default:
                 Debug.LogError("Unknown season!" + season);
-                return SpringBG;
+                return new GameObject[] { SpringBG, SpringFront };
         }
     }
 
-    private void SetSeasonBGAlpha(float alpha, Season season)
+    private void SetSeasonImgAlpha(float alpha, Season season)
     {
-        var imgObj = GetBackgroundImage(season);
-        Color c = imgObj.GetComponent<SpriteRenderer>().color;
-        c.a = alpha;
-        imgObj.GetComponent<SpriteRenderer>().color = c;
+        var imgObjs = GetSeasonImages(season);
+        foreach (var obj in imgObjs)
+        {
+            if (obj)
+            {
+                Color c = obj.GetComponent<SpriteRenderer>().color;
+                c.a = alpha;
+                obj.GetComponent<SpriteRenderer>().color = c;
+            }
+        }
     }
 
 }
