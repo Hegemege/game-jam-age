@@ -49,6 +49,7 @@ public class TreeGenerator : MonoBehaviour
     private List<Vector3> ringBasePositions;
 
     private List<GameObject> branches;
+    private List<GameObject> canopies;
 
     private Random.State initialRandomState;
 
@@ -57,7 +58,7 @@ public class TreeGenerator : MonoBehaviour
         // Initialize and store the random seed
         initialRandomState = Random.state;
 
-        RegenerateTree();
+        RegenerateTree(false);
     }
 
     void Start() 
@@ -69,7 +70,7 @@ public class TreeGenerator : MonoBehaviour
     {
         if (Input.GetKeyDown("r"))
         {
-            RegenerateTree();
+            RegenerateTree(true);
         }
     }
 
@@ -82,7 +83,14 @@ public class TreeGenerator : MonoBehaviour
     {
         previousSize = size;
 
-        StartCoroutine(GenerateSmooth(30, newSize, 0f, 3f));
+        // If the size is large enough, update mesh
+        if (Mathf.Abs(newSize - size) > 0.01f)
+        {
+            StartCoroutine(GenerateSmooth(30, newSize, 0f, 3f));
+        }
+        
+        // If leaves have changed, shrink or expand the canopies
+        // TODO:
     }
 
     IEnumerator GenerateSmooth(int steps, float newSize, float time, float duration)
@@ -94,18 +102,20 @@ public class TreeGenerator : MonoBehaviour
 
         if (rate >= 1f)
         {
+            size = newSize;
+            RegenerateTree(false);
             yield break;
         }
 
         yield return new WaitForSeconds(stepSize);
 
         size = previousSize + rate * (newSize - previousSize);
-        RegenerateTree();
+        RegenerateTree(false);
 
         StartCoroutine(GenerateSmooth(steps, newSize, time, duration));
     }
 
-    private void RegenerateTree()
+    private void RegenerateTree(bool canopyAnimation)
     {
         //size = Random.Range(0.5f, 1.5f);
 
@@ -125,11 +135,11 @@ public class TreeGenerator : MonoBehaviour
         // Generate initial tree params for mesh generation
         NewTreeParameters(TrunkLength);
 
-        // Initialize branches
         branches = new List<GameObject>();
+        canopies = new List<GameObject>();
 
         // Generate the tree
-        GenerateTree();
+        GenerateTree(canopyAnimation);
 
         transform.localScale = Vector3.one * Scale;
     }
@@ -183,13 +193,13 @@ public class TreeGenerator : MonoBehaviour
         }
     }
 
-    private void GenerateTree()
+    private void GenerateTree(bool canopyAnimation)
     {
         var trunk = GenerateBranch(gameObject, transform.position, Vector3.up, 0, TrunkStartThickness, TrunkInterval, TrunkLength);
 
         GenerateTreeRecursive(trunk);
 
-        GenerateCanopy();
+        GenerateCanopy(canopyAnimation);
     }
 
     private void GenerateTreeRecursive(GameObject parent)
@@ -221,7 +231,7 @@ public class TreeGenerator : MonoBehaviour
         }
     }
 
-    private void GenerateCanopy()
+    private void GenerateCanopy(bool canopyAnimation)
     {
         for (var i = 0; i < branches.Count; i++)
         {
@@ -236,10 +246,15 @@ public class TreeGenerator : MonoBehaviour
             // Scale the object
             var branchThickness = branch.GetComponent<Branch>().InitialThickness;
             canopy.transform.rotation = Random.rotation;
-            canopy.transform.localScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness * size);
 
             // Generate the canopy mesh
             GenerateCanopyMesh(canopy);
+
+            // Give scaling instructions
+            canopy.GetComponent<Canopy>().TargetScale = Vector3.one * Mathf.Log(Random.Range(10f, 30f) * branchThickness * size);
+            canopy.GetComponent<Canopy>().SkipExpansion = !canopyAnimation;
+
+            canopies.Add(canopy);
         }
     }
 
