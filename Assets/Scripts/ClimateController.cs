@@ -14,6 +14,14 @@ public enum Season
 
 public class ClimateController : MonoBehaviour 
 {
+    private AudioSource source;
+
+    public AudioClip SpringMusic;
+    public AudioClip SummerMusic;
+    public AudioClip AutumnMusic;
+    public AudioClip WinterMusic;
+    public AudioClip SeasonChangeJingle;
+
     public GameObject SpringBG;
     public GameObject SummerBG;
     public GameObject AutumnBG;
@@ -67,6 +75,8 @@ public class ClimateController : MonoBehaviour
 
     void Awake()
     {
+        source = GetComponent<AudioSource>();
+
         temperatureGauge = GameObject.Find("TemperatureGauge").GetComponent<Text>();
         yearText = GameObject.Find("YearText").GetComponent<Text>();
 
@@ -95,7 +105,7 @@ public class ClimateController : MonoBehaviour
 
     void Start() 
     {
-        
+        PlaySeasonMusic(currentSeason);
     }
     
     void Update() 
@@ -144,6 +154,12 @@ public class ClimateController : MonoBehaviour
         var ratio = Mathf.Clamp(time / SeasonInterpolationLength, 0, 1); // Ratio stays 0, until the season starts to change
         InterpolateParameters(ratio, GetNextSeason(currentSeason));
 
+        // Change volume (fade until next season music)
+        if (ratio < 1)
+        {
+            source.volume = 1 - ratio;
+        }
+
         // Change the background
         SetSeasonImgAlpha((1 - ratio), currentSeason);
         SetSeasonImgAlpha(ratio, GetNextSeason(currentSeason));
@@ -173,6 +189,33 @@ public class ClimateController : MonoBehaviour
         sunlight = prevSun + ratio * (targetSun - prevSun);
     }
 
+    private void PlaySeasonMusic(Season season)
+    {
+        switch (season)
+        {
+            case Season.Spring:
+                source.Stop();
+                source.PlayOneShot(SpringMusic);
+                break;
+            case Season.Summer:
+                source.Stop();
+                source.PlayOneShot(SummerMusic);
+                break;
+            case Season.Autumn:
+                source.Stop();
+                source.PlayOneShot(AutumnMusic);
+                break;
+            case Season.Winter:
+                source.Stop();
+                source.PlayOneShot(WinterMusic);
+                break;
+            default:
+                Debug.LogError("Unknown season!" + season);
+                break;
+        }
+        
+    }
+
     private void ChangeSeason(Season current, Season target)
     {
         // Invokes growth on the tree
@@ -183,6 +226,7 @@ public class ClimateController : MonoBehaviour
 
         // And finally set the current season
         currentSeason = target;
+        PlaySeasonMusic(currentSeason);
     }
 
     // Helper methods
