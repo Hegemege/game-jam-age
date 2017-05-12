@@ -11,6 +11,7 @@ public class GameFlow : MonoBehaviour
     public Image Fade;
     public Button PlayAgainButton;
     public Image Text;
+    public Button CreditButton;
 
     private TreeScript tree;
 
@@ -30,6 +31,7 @@ public class GameFlow : MonoBehaviour
 
         PlayAgainButton.onClick.AddListener(PlayAgain);
         PlayAgainButton.gameObject.SetActive(false);
+        CreditButton.gameObject.SetActive(false);
     }
 
     private void PlayAgain()
@@ -59,6 +61,7 @@ public class GameFlow : MonoBehaviour
             {
                 Time.timeScale = 0f;
                 PlayAgainButton.gameObject.SetActive(true);
+                CreditButton.gameObject.SetActive(true);
             }
         }
     }
