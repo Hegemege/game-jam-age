@@ -15,6 +15,8 @@ public class EnvironmentSounds : MonoBehaviour {
 
     public float MinInterval;
     public float MaxInterval;
+    public float MinVolume;
+    public float MaxVolume;
 
     private AudioSource source;
     private float timeToNextSound;
@@ -38,7 +40,8 @@ public class EnvironmentSounds : MonoBehaviour {
         {
             RandomizeInterval();
             var clips = GetSeasonClips(climate.GetSeason());
-            PlayRandomClip(clips);
+            var volume = Random.Range(MinVolume, MaxVolume);
+            PlayRandomClip(clips, 0, volume);
         }
 
 	}
@@ -70,13 +73,14 @@ public class EnvironmentSounds : MonoBehaviour {
 
 
 
-    private void PlayRandomClip(AudioClip[] clips)
+    private void PlayRandomClip(AudioClip[] clips, float delay, float volume)
     {
         var len = clips.GetLength(0);
         if (len > 0)
         {
+            StartCoroutine(Wait(delay));
             var clip = clips[Random.Range(0, len - 1)];
-            source.PlayOneShot(clip);
+            source.PlayOneShot(clip, volume);
         }
         
     } 
@@ -86,8 +90,13 @@ public class EnvironmentSounds : MonoBehaviour {
         timeToNextSound = Random.Range(MinInterval, MaxInterval);
     }
 
-    public void PlayRandomTreeClip()
+    public void PlayRandomTreeClip(float delay, float volume)
     {
-        PlayRandomClip(TreeGrowingSounds);
+        PlayRandomClip(TreeGrowingSounds, delay, volume);
+    }
+    
+    IEnumerator Wait(float delay)
+    {
+        yield return new WaitForSeconds(delay);
     }
 }

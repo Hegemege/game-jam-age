@@ -15,6 +15,8 @@ public enum Season
 public class ClimateController : MonoBehaviour 
 {
     private AudioSource source;
+    private EnvironmentSounds environmentSoundPlayer;
+
 
     public AudioClip SpringMusic;
     public AudioClip SummerMusic;
@@ -82,8 +84,9 @@ public class ClimateController : MonoBehaviour
 
         seasonColors = GetComponentInChildren<ColorChanger>();
 
+        environmentSoundPlayer = GameObject.Find("EnvironmentalSounds").GetComponent<EnvironmentSounds>();
 
-		var sunSlider = GameObject.Find("SunSlider").GetComponent<Slider>();
+        var sunSlider = GameObject.Find("SunSlider").GetComponent<Slider>();
 		sunSlider.onValueChanged.AddListener((value)=>{SunlightModifier = value;});
 		var rainSlider = GameObject.Find("RainSlider").GetComponent<Slider>();
 		rainSlider.onValueChanged.AddListener((value)=>{RainModifier = value;});
@@ -227,6 +230,9 @@ public class ClimateController : MonoBehaviour
         // And finally set the current season
         currentSeason = target;
         PlaySeasonMusic(currentSeason);
+        var delay = Random.Range(0.5f, 2);
+        var volume = Random.Range(0.5f, 1);
+        environmentSoundPlayer.PlayRandomTreeClip(delay, volume);
     }
 
     // Helper methods
