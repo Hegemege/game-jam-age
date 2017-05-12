@@ -17,12 +17,14 @@ public class ClimateController : MonoBehaviour
     private AudioSource source;
     private EnvironmentSounds environmentSoundPlayer;
 
-
     public AudioClip SpringMusic;
     public AudioClip SummerMusic;
     public AudioClip AutumnMusic;
     public AudioClip WinterMusic;
     public AudioClip SeasonChangeJingle;
+
+    public AudioSource WaterAudio;
+    public AudioSource SunlightAudio;
 
     public GameObject SpringBG;
     public GameObject SummerBG;
@@ -87,9 +89,17 @@ public class ClimateController : MonoBehaviour
         environmentSoundPlayer = GameObject.Find("EnvironmentalSounds").GetComponent<EnvironmentSounds>();
 
         var sunSlider = GameObject.Find("SunSlider").GetComponent<Slider>();
-		sunSlider.onValueChanged.AddListener((value)=>{SunlightModifier = value;});
+		sunSlider.onValueChanged.AddListener((value) =>
+		{
+		    SunlightModifier = value;
+            SunlightAudio.Play();
+		});
 		var rainSlider = GameObject.Find("RainSlider").GetComponent<Slider>();
-		rainSlider.onValueChanged.AddListener((value)=>{RainModifier = value;});
+		rainSlider.onValueChanged.AddListener((value) =>
+		{
+		    RainModifier = value;
+            WaterAudio.Play();
+		});
 
 
 
