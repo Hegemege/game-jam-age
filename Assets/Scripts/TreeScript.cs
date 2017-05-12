@@ -82,9 +82,9 @@ public class TreeScript : MonoBehaviour
     }
     
 	void Start ()
-    {
-        
-    }
+	{
+
+	}
 	
 	void Update ()
     {

@@ -62,6 +62,7 @@ public class WeatherController : MonoBehaviour
 
         if (startedSeason != climate.GetSeason())
         {
+            startedSeason = climate.GetSeason();
             if (climate.GetSeason() == Season.Winter && raining)
             {
                 RainStop();
