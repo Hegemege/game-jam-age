@@ -15,7 +15,6 @@ public class UIController : MonoBehaviour
     void Awake()
     {
         parentWidth = ((RectTransform) WaterOptimalImage.transform.parent).sizeDelta.x;
-        Debug.Log(parentWidth);
     }
 
     void Start() 

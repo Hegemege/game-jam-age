@@ -22,6 +22,7 @@ public class GameFlow : MonoBehaviour
 
     void Awake()
     {
+        Time.timeScale = 1f;
         tree = GameObject.Find("Tree").GetComponent<TreeScript>();
     }
 
