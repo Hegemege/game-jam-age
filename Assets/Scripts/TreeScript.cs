@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class TreeScript : MonoBehaviour
 {
     private ClimateController climate;
+    private UIController climateUI;
     private Text energyText;
     private Text waterText;
 
@@ -69,6 +70,7 @@ public class TreeScript : MonoBehaviour
         waterText = GameObject.Find("WaterText").GetComponent<Text>();
         energyText = GameObject.Find("EnergyText").GetComponent<Text>();
         climate = GameObject.Find("ClimateController").GetComponent<ClimateController>();
+        climateUI = GameObject.Find("UI").GetComponent<UIController>();
         Leaves = InitialLeaves;
         Water = InitialWater;
         Energy = InitialEnergy;
@@ -195,6 +197,8 @@ public class TreeScript : MonoBehaviour
 		var sunlightRange = GetSeasonSunlightTarget (season);
 		var sunlightOptimality = CalculateOptimality(climate.GetSunlight(), sunlightRange[0], sunlightRange[1]);
 		seasonalLeavesGain += waterOptimality * sunlightOptimality * Time.deltaTime;
+
+        climateUI.UpdateOptimalUI(waterParams[0], waterParams[1], energyParams[0], energyParams[1]);
     }
 
 	public void SeasonalGrowth(Season currentSeason, Season nextSeason, float seasonLength)
