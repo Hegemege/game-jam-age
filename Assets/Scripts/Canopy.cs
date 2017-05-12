@@ -93,7 +93,7 @@ public class Canopy : MonoBehaviour
 
         var rate = Mathf.Clamp(expandTimer / expandTime, 0f, 1f);
 
-        transform.localScale = Vector3.Lerp(startScale, targetScale * leaves, rate);
+        transform.localScale = Vector3.Lerp(startScale, targetScale * leaves * 2f, rate);
 
         // Mesh transition
         meshTransitionTimer += dt;

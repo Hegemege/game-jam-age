@@ -77,6 +77,8 @@ public class TreeGenerator : MonoBehaviour
         {
             RegenerateTree(true, false, true);
         }
+
+        transform.localScale = Vector3.one * Scale;
     }
 
     /// <summary>
@@ -204,8 +206,6 @@ public class TreeGenerator : MonoBehaviour
         {
             GenerateTree(canopyAnimation, instant);
         }
-
-        transform.localScale = Vector3.one * Scale;
     }
 
     private void NewTreeParameters(int length)
