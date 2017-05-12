@@ -78,7 +78,7 @@ public class TreeGenerator : MonoBehaviour
             RegenerateTree(true, false, true);
         }
 
-        transform.localScale = Vector3.one * Scale;
+        transform.localScale = Vector3.one * Scale * 2f * (Screen.height / 1080f);
     }
 
     /// <summary>
