@@ -18,8 +18,8 @@ public class WeatherController : MonoBehaviour
 
     private bool raining;
     private Season startedSeason;
-    private ParticleSystem.EmissionModule rainEmission;
-    private ParticleSystem.EmissionModule snowEmission;
+    private float rainEmission;
+    private float snowEmission;
 
     void Awake()
     {
@@ -33,8 +33,8 @@ public class WeatherController : MonoBehaviour
         climate = GameObject.Find("ClimateController").GetComponent<ClimateController>();
         weatherTime = RainCycle;
 
-        rainEmission = Rain.emission;
-        snowEmission = Snow.emission;
+        rainEmission = Rain.emission.rateOverTimeMultiplier;
+        snowEmission = Snow.emission.rateOverTimeMultiplier;
     }
 
     void Start() 
@@ -44,6 +44,13 @@ public class WeatherController : MonoBehaviour
     
     void Update()
     {
+        var rain = climate.GetRain();
+
+        var emission = Rain.emission;
+        emission.rateOverTimeMultiplier = rain * rainEmission;
+        emission = Snow.emission;
+        emission.rateOverTimeMultiplier = rain * snowEmission;
+
         float dt = Time.deltaTime;
 
         weatherTimer += dt * (climate.RainModifier + 2);
@@ -123,11 +130,11 @@ public class WeatherController : MonoBehaviour
         var rain = climate.GetRain();
         if (rain > 0.5f)
         {
-            audioSource.PlayOneShot(RainSoundHard);
+            audioSource.PlayOneShot(RainSoundHard, RainVolume);
         }
         else
         {
-            audioSource.PlayOneShot(RainSoundLow);
+            audioSource.PlayOneShot(RainSoundLow, RainVolume);
         }
         
         Rain.Play();
