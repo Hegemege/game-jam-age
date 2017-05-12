@@ -176,7 +176,7 @@ public class ClimateController : MonoBehaviour
 
     private void InterpolateParameters(float ratio, Season targetSeason)
     {
-        seasonColors.InterpolateColors(ratio, targetSeason);
+        seasonColors.InterpolateColors(ratio, SunlightModifier, targetSeason);
 
         var targetTemp = GetSeasonTemperature(targetSeason);
         var targetRain = GetSeasonRain(targetSeason);

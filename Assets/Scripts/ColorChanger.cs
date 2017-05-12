@@ -45,7 +45,7 @@ public class ColorChanger : MonoBehaviour
         
     }
 
-    public void InterpolateColors(float ratio, Season targetSeason)
+    public void InterpolateColors(float ratio, float sunlight, Season targetSeason)
     {
         // Copypasta because it's fast
         switch (targetSeason)
@@ -88,6 +88,7 @@ public class ColorChanger : MonoBehaviour
         CurrentLightColor = Color.Lerp(startLightColor, targetLightColor, ratio);
 
         directionalLight.intensity = Mathf.Lerp(startIntensity, targetIntensity, ratio);
+
         directionalLight.color = CurrentLightColor;
 
         RenderSettings.ambientLight = Color.Lerp(startAmbientColor, targetAmbientColor, ratio);

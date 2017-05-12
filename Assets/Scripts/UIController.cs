@@ -10,10 +10,15 @@ public class UIController : MonoBehaviour
     public Image WaterOptimalImage;
     public Image EnergyOptimalImage;
 
+    public Image SunlightFade;
+    public float SunlightLow;
+    public float SunlightHigh;
+
     private float parentWidth;
 
     void Awake()
     {
+        climate = GameObject.Find("ClimateController").GetComponent<ClimateController>();
         parentWidth = ((RectTransform) WaterOptimalImage.transform.parent).sizeDelta.x;
     }
 
@@ -41,5 +46,8 @@ public class UIController : MonoBehaviour
         height = ((RectTransform)EnergyOptimalImage.transform).sizeDelta.y;
         ((RectTransform)EnergyOptimalImage.transform).sizeDelta = new Vector2((energyHigh - energyLow) * parentWidth, height);
 
+        var newSunlightColor = SunlightFade.color;
+        newSunlightColor.a = Mathf.Lerp(SunlightLow, SunlightHigh, 1 - (climate.SunlightModifier + 2) / 4f);
+        SunlightFade.color = newSunlightColor;
     }
 }
