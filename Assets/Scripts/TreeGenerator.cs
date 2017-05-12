@@ -80,7 +80,7 @@ public class TreeGenerator : MonoBehaviour
         }
         */
 
-        transform.localScale = Vector3.one * Scale * 2f * (Screen.height / 1080f);
+        transform.localScale = Vector3.one * Scale;// * 2f * (Screen.height / 1080f);
     }
 
     /// <summary>
@@ -208,7 +208,7 @@ public class TreeGenerator : MonoBehaviour
             GenerateTree(canopyAnimation, instant);
         }
 
-        transform.localScale = Vector3.one * Scale * 2f * (Screen.height / 1080f);
+        transform.localScale = Vector3.one * Scale;// * 2f * (Screen.height / 1080f);
     }
 
     private void NewTreeParameters(int length)
