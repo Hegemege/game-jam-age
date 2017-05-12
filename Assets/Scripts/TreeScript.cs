@@ -65,6 +65,9 @@ public class TreeScript : MonoBehaviour
     [HideInInspector]
     public float Leaves;
 
+    [HideInInspector]
+    public bool Dead;
+
     void Awake()
     {
         waterText = GameObject.Find("WaterText").GetComponent<Text>();
@@ -97,10 +100,12 @@ public class TreeScript : MonoBehaviour
         // Check status (Dead/Alive)
         if (Water >= MaxWater)
         {
-            Debug.Log("The tree is rotten!");
+            //Dead = true;
+            //Debug.Log("The tree is rotten!");
         }
         else if (Water <= 0)
         {
+            Dead = true;
             Debug.Log("The tree dried out!");
         }
     }

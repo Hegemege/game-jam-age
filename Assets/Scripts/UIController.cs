@@ -36,8 +36,6 @@ public class UIController : MonoBehaviour
         var height = ((RectTransform) WaterOptimalImage.transform).sizeDelta.y;
         ((RectTransform) WaterOptimalImage.transform).sizeDelta = new Vector2((waterHigh - waterLow) * parentWidth, height);
 
-        Debug.Log(energyLow + " - " + energyHigh);
-
         y = EnergyOptimalImage.transform.localPosition.y;
         z = EnergyOptimalImage.transform.localPosition.z;
         EnergyOptimalImage.transform.localPosition = new Vector3(parentWidth * energyLow, y, z);

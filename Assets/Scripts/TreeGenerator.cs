@@ -86,7 +86,7 @@ public class TreeGenerator : MonoBehaviour
     /// <param name="newLeaves"></param>
     public void SeasonalGrowth(float newSize, float newLeaves, Season nextSeason)
     {
-        newSize = Mathf.Log(1 + size + newSize);
+        //newSize = Mathf.Log(1 + size + newSize);
 
         size = newSize;
         RegenerateTree(false, false, true);
