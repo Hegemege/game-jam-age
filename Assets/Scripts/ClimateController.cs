@@ -116,7 +116,7 @@ public class ClimateController : MonoBehaviour
         UpdateSeason();
 
         temperatureGauge.text = temperature.ToString("F1") + " °C";
-        yearText.text = "Year: " + Year.ToString();
+        yearText.text = currentSeason.ToString() + " Year " + Year.ToString();
     }
 
     public Season GetSeason()
