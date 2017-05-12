@@ -224,6 +224,11 @@ public class ClimateController : MonoBehaviour
         // Invokes growth on the tree
         // Spends energy
 
+        if (target == Season.Spring)
+        {
+            Year += 1;
+        }
+
         var tree = GameObject.Find("Tree").GetComponent<TreeScript>();
 		tree.SeasonalGrowth(current, target, SeasonLength); // Growth is affected by the previous season
 
