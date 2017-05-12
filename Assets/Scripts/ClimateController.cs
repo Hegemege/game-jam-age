@@ -194,29 +194,32 @@ public class ClimateController : MonoBehaviour
 
     private void PlaySeasonMusic(Season season)
     {
+
+        source.loop = false;
         switch (season)
         {
             case Season.Spring:
                 source.Stop();
-                source.PlayOneShot(SpringMusic);
+                source.clip = SpringMusic;
                 break;
             case Season.Summer:
                 source.Stop();
-                source.PlayOneShot(SummerMusic);
+                source.clip = SummerMusic;
                 break;
             case Season.Autumn:
                 source.Stop();
-                source.PlayOneShot(AutumnMusic);
+                source.clip = AutumnMusic;
                 break;
             case Season.Winter:
                 source.Stop();
-                source.PlayOneShot(WinterMusic);
+                source.clip = WinterMusic;
                 break;
             default:
                 Debug.LogError("Unknown season!" + season);
                 break;
         }
-        
+        source.loop = true;
+        source.Play();
     }
 
     private void ChangeSeason(Season current, Season target)
