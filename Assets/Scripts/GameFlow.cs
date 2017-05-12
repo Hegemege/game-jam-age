@@ -23,11 +23,12 @@ public class GameFlow : MonoBehaviour
     void Awake()
     {
         Time.timeScale = 1f;
-        tree = GameObject.Find("Tree").GetComponent<TreeScript>();
     }
 
     void Start() 
     {
+        tree = GameObject.Find("Tree").GetComponent<TreeScript>();
+
         PlayAgainButton.onClick.AddListener(PlayAgain);
         PlayAgainButton.gameObject.SetActive(false);
     }
