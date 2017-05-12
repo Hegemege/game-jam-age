@@ -78,7 +78,7 @@ public class EnvironmentSounds : MonoBehaviour {
         var len = clips.GetLength(0);
         if (len > 0)
         {
-            StartCoroutine(Wait(delay));
+            //StartCoroutine(Wait(delay));
             var clip = clips[Random.Range(0, len - 1)];
             source.PlayOneShot(clip, volume);
         }
